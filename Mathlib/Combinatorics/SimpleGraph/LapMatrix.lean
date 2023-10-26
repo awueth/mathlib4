@@ -1,4 +1,5 @@
 import Mathlib.Combinatorics.SimpleGraph.Basic
+import Mathlib.Combinatorics.SimpleGraph.DegreeSum
 import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 import Mathlib.Combinatorics.SimpleGraph.IncMatrix
 import Mathlib.Data.Matrix.Basic
@@ -23,6 +24,11 @@ variable (s : Finset V)
 
 def special_vector : V → ℝ := fun v => if v ∈ s then 1 else -1
 
+lemma square (x : V) : (special_vector s x) * (special_vector s x) = 1 := by
+  unfold special_vector
+  simp
+  sorry
+
 /- x^tLx = 4*cut(S) -/
 theorem asdf :
   lapBilinForm G (special_vector s) (special_vector s) = 4*cut G s := by
@@ -34,7 +40,6 @@ theorem asdf :
   unfold mulVec dotProduct
   simp [Finset.mul_sum]
   unfold degMatrix
-  simp [mul_comm]
-  unfold special_vector
-  simp
+  simp [mul_comm, ← mul_assoc, square]
+  rw [sum_degrees_eq_twice_card_edges]
   sorry
