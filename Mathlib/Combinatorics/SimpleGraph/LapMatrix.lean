@@ -14,54 +14,47 @@ open BigOperators Finset Matrix SimpleGraph
 
 variable {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj]
 
-def degMatrix : Matrix V V ℝ :=
-  fun a b => if a = b then G.degree a else 0
+def SimpleGraph.degMatrix (R : Type*) [Ring R] : Matrix V V R :=
+  of fun a b ↦ if a = b then (G.degree a : R) else 0
 
-def lapMatrix : Matrix V V ℝ := degMatrix G - G.adjMatrix ℝ
+def SimpleGraph.lapMatrix (R : Type*) [Ring R] : Matrix V V R := G.degMatrix R - G.adjMatrix R
 
-def lapBilinForm := Matrix.toBilin' (lapMatrix G)
+theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) = 0 := by
+  unfold lapMatrix
+  rw [sub_mulVec]
+  ext; simp;
+  unfold mulVec dotProduct
+  simp only [Pi.one_apply, mul_one]
+  unfold degMatrix
+  simp only [of_apply, sum_ite_eq, mem_univ, ite_true, sub_self]
+  -- Could this be useful: adjMatrix_mulVec_const_apply?
 
 def cut : Finset V → ℕ :=
   fun s => ∑ i in s, ∑ j in sᶜ, (if G.Adj i j then 1 else 0)
 
 variable (s : Finset V)
 
-def special_vector : V → ℝ := fun v => if v ∈ s then 1 else -1
+def indicatorMinusIndicator : V → ℤ := fun v => if v ∈ s then 1 else -1
 
-theorem ones_vector_is_in_kernel : mulVec (lapMatrix G) (Function.const V 1) = 0 := by
-  unfold lapMatrix
-  rw [sub_mulVec]
-  ext
-  simp
-  unfold mulVec dotProduct
-  simp
-  unfold degMatrix
-  simp
-  -- Could this be useful: adjMatrix_mulVec_const_apply?
+lemma indicatorMinusIndicator_mul_indicatorMinusIndicator (x y : V) :
+  (indicatorMinusIndicator s x) * (indicatorMinusIndicator s y) =
+  if ((x ∈ s ∧ y ∈ s) ∨ (x ∈ sᶜ ∧ y ∈ sᶜ)) then 1 else - 1 := by
+  unfold indicatorMinusIndicator
+  split
+  case inl h
+  · simp [h]
+  case inr h'
+  · simp [h']
 
-lemma square (x : V) : (special_vector s x) * (special_vector s x) = 1 := by
-  unfold special_vector
+lemma indicatorMinusIndicator_square (x : V) :
+  (indicatorMinusIndicator s x) * (indicatorMinusIndicator s x) = 1 := by
+  unfold indicatorMinusIndicator
   split
   repeat simp
 
-
-lemma special_mul (x y : V) : (special_vector s x) * (special_vector s y) =
-  if ((x ∈ s ∧ y ∈ s) ∨ (x ∈ sᶜ ∧ y ∈ sᶜ)) then 1 else - 1 := by
-  unfold special_vector
-  split
-  case inl h
-  {
-    simp [h]
-  }
-  case inr h'
-  {
-    simp [h']
-  }
-
 /- x^tLx = 4*cut(S) -/
 theorem asdf :
-  lapBilinForm G (special_vector s) (special_vector s) = 4*cut G s := by
-  unfold lapBilinForm
+  Matrix.toBilin' (G.lapMatrix ℤ) (indicatorMinusIndicator s) (indicatorMinusIndicator s) = 4*cut G s := by
   rw [Matrix.toBilin'_apply']
   unfold lapMatrix
   rw [sub_mulVec]
@@ -69,10 +62,10 @@ theorem asdf :
   unfold mulVec dotProduct
   simp [Finset.mul_sum]
   unfold degMatrix
-  simp [mul_comm, ← mul_assoc, square]
+  simp [mul_comm, ← mul_assoc, indicatorMinusIndicator_square]
   -- rw [sum_degrees_eq_twice_card_edges]
-  simp [special_mul]
+  simp [indicatorMinusIndicator_mul_indicatorMinusIndicator]
   sorry
 
-theorem main_result : Fintype.card G.ConnectedComponent = Fintype.card V - (lapMatrix G).rank := by
+theorem main_result : Fintype.card G.ConnectedComponent = Fintype.card V - (G.lapMatrix ℤ).rank := by
   sorry
