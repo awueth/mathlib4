@@ -4,6 +4,7 @@ import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 import Mathlib.Combinatorics.SimpleGraph.IncMatrix
 import Mathlib.Data.Matrix.Basic
 import Mathlib.Data.Real.Basic
+import Mathlib.LinearAlgebra.Basic
 import Mathlib.LinearAlgebra.Matrix.BilinearForm
 
 open BigOperators Finset Matrix SimpleGraph
@@ -26,8 +27,36 @@ def special_vector : V → ℝ := fun v => if v ∈ s then 1 else -1
 
 lemma square (x : V) : (special_vector s x) * (special_vector s x) = 1 := by
   unfold special_vector
-  simp
-  sorry
+  split
+  repeat simp
+
+lemma special_mul (x y : V) : (special_vector s x) * (special_vector s y) =
+  if ((x ∈ s ∧ y ∈ s) ∨ (x ∈ sᶜ ∧ y ∈ sᶜ)) then 1 else - 1 := by
+  unfold special_vector
+  split
+  {
+    split
+    {
+      simp
+      sorry
+    }
+    {
+      simp
+      sorry
+    }
+  }
+  {
+    split
+    {
+      simp
+      sorry
+    }
+    {
+      simp
+      sorry
+    }
+  }
+
 
 /- x^tLx = 4*cut(S) -/
 theorem asdf :
@@ -41,5 +70,11 @@ theorem asdf :
   simp [Finset.mul_sum]
   unfold degMatrix
   simp [mul_comm, ← mul_assoc, square]
-  rw [sum_degrees_eq_twice_card_edges]
+  -- rw [sum_degrees_eq_twice_card_edges]
+  simp [special_mul]
   sorry
+
+
+
+#check Matrix.toLinearMap₂' (lapMatrix G)
+#check LinearMap.ker (Matrix.toLinearMap₂' (lapMatrix G))
