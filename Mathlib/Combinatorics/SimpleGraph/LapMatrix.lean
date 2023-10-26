@@ -28,38 +28,35 @@ variable (s : Finset V)
 
 def special_vector : V → ℝ := fun v => if v ∈ s then 1 else -1
 
+theorem ones_vector_is_in_kernel : mulVec (lapMatrix G) (Function.const V 1) = 0 := by
+  unfold lapMatrix
+  rw [sub_mulVec]
+  ext
+  simp
+  unfold mulVec dotProduct
+  simp
+  unfold degMatrix
+  simp
+  -- Could this be useful: adjMatrix_mulVec_const_apply?
+
 lemma square (x : V) : (special_vector s x) * (special_vector s x) = 1 := by
   unfold special_vector
   split
   repeat simp
 
+
 lemma special_mul (x y : V) : (special_vector s x) * (special_vector s y) =
   if ((x ∈ s ∧ y ∈ s) ∨ (x ∈ sᶜ ∧ y ∈ sᶜ)) then 1 else - 1 := by
   unfold special_vector
   split
+  case inl h
   {
-    split
-    {
-      simp
-      sorry
-    }
-    {
-      simp
-      sorry
-    }
+    simp [h]
   }
+  case inr h'
   {
-    split
-    {
-      simp
-      sorry
-    }
-    {
-      simp
-      sorry
-    }
+    simp [h']
   }
-
 
 /- x^tLx = 4*cut(S) -/
 theorem asdf :
@@ -76,8 +73,6 @@ theorem asdf :
   -- rw [sum_degrees_eq_twice_card_edges]
   simp [special_mul]
   sorry
-
-
 
 theorem main_result : Fintype.card G.ConnectedComponent = Fintype.card V - (lapMatrix G).rank := by
   sorry
