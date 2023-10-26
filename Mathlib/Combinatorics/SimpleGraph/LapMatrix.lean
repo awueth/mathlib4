@@ -1,8 +1,11 @@
 import Mathlib.Combinatorics.SimpleGraph.Basic
 import Mathlib.Combinatorics.SimpleGraph.DegreeSum
+import Mathlib.Combinatorics.SimpleGraph.Connectivity
 import Mathlib.Combinatorics.SimpleGraph.AdjMatrix
 import Mathlib.Combinatorics.SimpleGraph.IncMatrix
 import Mathlib.Data.Matrix.Basic
+import Mathlib.Data.Matrix.Rank
+import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Basic
 import Mathlib.LinearAlgebra.Matrix.BilinearForm
@@ -76,5 +79,5 @@ theorem asdf :
 
 
 
-#check Matrix.toLinearMap₂' (lapMatrix G)
-#check LinearMap.ker (Matrix.toLinearMap₂' (lapMatrix G))
+theorem main_result : Fintype.card G.ConnectedComponent = Fintype.card V - (lapMatrix G).rank := by
+  sorry
