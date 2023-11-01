@@ -34,38 +34,57 @@ def cut : Finset V → ℕ :=
 
 variable (s : Finset V)
 
-def indicatorMinusIndicator : V → ℤ := fun v => if v ∈ s then 1 else -1
+def cutIndicator : V → ℤ := fun v => if v ∈ s then 1 else -1
 
-lemma indicatorMinusIndicator_mul_indicatorMinusIndicator (x y : V) :
-  (indicatorMinusIndicator s x) * (indicatorMinusIndicator s y) =
+lemma cutIndicator_mul_cutIndicator (x y : V) :
+  (cutIndicator s x) * (cutIndicator s y) =
   if ((x ∈ s ∧ y ∈ s) ∨ (x ∈ sᶜ ∧ y ∈ sᶜ)) then 1 else - 1 := by
-  unfold indicatorMinusIndicator
+  unfold cutIndicator
   split
   case inl h
   · simp [h]
   case inr h'
   · simp [h']
 
-lemma indicatorMinusIndicator_square (x : V) :
-  (indicatorMinusIndicator s x) * (indicatorMinusIndicator s x) = 1 := by
-  unfold indicatorMinusIndicator
+lemma cutIndicator_square (x : V) :
+  (cutIndicator s x) * (cutIndicator s x) = 1 := by
+  unfold cutIndicator
   split
   repeat simp
 
-/- x^tLx = 4*cut(S) -/
-theorem asdf :
-  Matrix.toBilin' (G.lapMatrix ℤ) (indicatorMinusIndicator s) (indicatorMinusIndicator s) = 4*cut G s := by
-  rw [Matrix.toBilin'_apply']
-  unfold lapMatrix
-  rw [sub_mulVec]
-  simp
+lemma vadkfboirw :
+  cutIndicator s ⬝ᵥ mulVec (G.degMatrix ℤ) (cutIndicator s) = ∑ x : V, G.degree x := by
   unfold mulVec dotProduct
   simp [Finset.mul_sum]
   unfold degMatrix
-  simp [mul_comm, ← mul_assoc, indicatorMinusIndicator_square]
-  -- rw [sum_degrees_eq_twice_card_edges]
-  simp [indicatorMinusIndicator_mul_indicatorMinusIndicator]
+  simp [mul_comm, ← mul_assoc, cutIndicator_square]
+
+lemma akvoioifke :
+  cutIndicator s ⬝ᵥ mulVec (G.adjMatrix ℤ) (cutIndicator s) = ∑ x : V, (∑ y : V, if G.Adj x y then (cutIndicator s x * cutIndicator s y) else 0) := by
+  unfold mulVec dotProduct
+  simp only [Finset.mul_sum]
+  simp only [mul_comm, ← mul_assoc, cutIndicator_mul_cutIndicator]
+  unfold adjMatrix
+  simp
+
+/- x^tLx = 4*cut(S) -/
+theorem asdf :
+  Matrix.toBilin' (G.lapMatrix ℤ) (cutIndicator s) (cutIndicator s) = 4*cut G s := by
+  rw [Matrix.toBilin'_apply']
+  unfold lapMatrix
+  rw [sub_mulVec]
+  simp only [dotProduct_sub]
+  rw [vadkfboirw]
+  rw [akvoioifke]
   sorry
+
+def cutIndicatorSet (vec : V → ℤ) (_ : ∀x : V, vec x = 1 ∨ vec x = -1) : Set V := {x : V | vec x = 1}
 
 theorem main_result : Fintype.card G.ConnectedComponent = Fintype.card V - (G.lapMatrix ℤ).rank := by
   sorry
+
+
+
+def badVector : V → ℤ := 2
+
+#check cutIndicatorSet badVector
