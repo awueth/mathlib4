@@ -31,6 +31,47 @@ theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) =
   simp only [of_apply, sum_ite_eq, mem_univ, ite_true, sub_self]
   -- Could this be useful: adjMatrix_mulVec_const_apply?
 
+theorem vec_lapMatrix_vec (x : V → ℤ) :
+  Matrix.toBilin' (G.lapMatrix ℤ) x x = ∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0 := by -- How to sum over edges (i,j)?
+  rw [Matrix.toBilin'_apply']
+  unfold lapMatrix
+  rw [sub_mulVec]
+  simp only [dotProduct_sub]
+  sorry
+
+/-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
+are connected, then x i = x j-/
+lemma vngnsdiojf (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x = 0) :
+  ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
+  intros i j
+  by_contra hn
+  have hc : Matrix.toBilin' (G.lapMatrix ℤ) x x ≠ 0
+  {
+    rw [vec_lapMatrix_vec]
+    sorry
+  }
+  exact absurd h hc
+
+/-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
+are reachable, then x i = x j-/
+theorem no_name_yet (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x = 0):
+  ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
+  intros i j
+  sorry
+
+
+/-We now have that functions in the kernel of L are constant on connected components. Find a basis
+of the kernel and show that it has size equal to the number of connected components-/
+
+
+#check LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ)) -- kernel
+#check Module.rank ℤ (↥LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))) -- dimension of kernel
+#check Fintype.card G.ConnectedComponent -- Number of connected components
+
+
+
+-- This stuff down here probably won't ne needed anymore
+
 -- The numbers of edges that are "cut" by removing a subset s of vertices
 def cut : Finset V → ℕ :=
   fun s => ∑ i in s, ∑ j in sᶜ, (if G.Adj i j then 1 else 0)
@@ -66,7 +107,7 @@ lemma cutIndicator_degMatrix_cutIndicator :
 -- xᵀDx = ∑₍ᵢⱼ₎ xᵢxⱼ
 lemma cutIndicator_adjMatrix_cutIndicator :
   cutIndicator s ⬝ᵥ mulVec (G.adjMatrix ℤ) (cutIndicator s) =
-  ∑ i : V, (∑ j : V, if G.Adj i j then (cutIndicator s i * cutIndicator s j) else 0) := by -- How to sum over edges (i,j)?
+  ∑ i : V, (∑ j : V, if G.Adj i j then (cutIndicator s i * cutIndicator s j) else 0) := by
   unfold mulVec dotProduct
   simp only [Finset.mul_sum]
   simp only [mul_comm, ← mul_assoc, cutIndicator_mul_cutIndicator]
@@ -93,3 +134,10 @@ theorem vvkjre2 (y : V → ℤ) (h0 : y ≠ 0) (h_ker : mulVec (G.lapMatrix ℤ)
   · simp
     sorry
   · sorry
+
+
+
+/-
+How to get all elements in the Fintype V, V.elems does not work
+https://leanprover-community.github.io/mathlib4_docs/Mathlib/Data/Fintype/Basic.html#Fintype.elems
+-/
