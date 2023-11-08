@@ -59,6 +59,19 @@ theorem cut_zero_ker (s : Finset V) (hs : cut G s = 0) :
   {
     -- Split sum into two parts; one over s and one over sᶜ
     rw[← Finset.sum_compl_add_sum s]
+
+    have h1 : ∀ w, w ∈ sᶜ → 1 = 1
+    {
+      sorry
+    }
+
+    have h1 : ∀ v, v ∈ s → vertices_to_vector s v = 1
+    {
+      intro v hc
+      unfold vertices_to_vector
+      rw[if_pos]
+      exact hc
+    }
     sorry
   }
   -- If hv : ¬(v ∈ s)
