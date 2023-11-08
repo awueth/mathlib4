@@ -34,8 +34,32 @@ def vector_to_vertices (f : V → ℤ) :
 
 
 
--- If x ∈ {-1, 1}^V ∩ ker(L), then vector_to_vertices has cut 0
-
+/-- If x ∈ {-1, 1}^V ∩ ker(L), then vector_to_vertices has cut 0
+theorem ker_cut_zero (f : V → ℤ) :
+  cut G (vector_to_vertices f) = Function.const V 0 := by
+  sorry
+--/
 
 
 -- If s ⊂ V has cut 0, the vertices_to_vector ∈ ker(L)
+theorem cut_zero_ker (s : Finset V) (h : cut G s = 0) :
+  mulVec (G.lapMatrix ℤ) (vertices_to_vector s) = 0 := by
+
+  -- Check that the entry at v is zero
+  ext v
+  simp
+
+  -- Pluggin in all the definitions
+  unfold mulVec dotProduct lapMatrix degMatrix adjMatrix vertices_to_vector
+  simp
+
+  -- Split the proof into two cases
+  by_cases h : v ∈ s
+  {
+    -- If h : v ∈ s
+    sorry
+  }
+  {
+    -- If h : ¬(v ∈ s)
+    sorry
+  }
