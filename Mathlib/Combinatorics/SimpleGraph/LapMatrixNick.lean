@@ -42,7 +42,7 @@ theorem ker_cut_zero (f : V → ℤ) :
 
 
 -- If s ⊂ V has cut 0, the vertices_to_vector ∈ ker(L)
-theorem cut_zero_ker (s : Finset V) (h : cut G s = 0) :
+theorem cut_zero_ker (s : Finset V) (hs : cut G s = 0) :
   mulVec (G.lapMatrix ℤ) (vertices_to_vector s) = 0 := by
 
   -- Check that the entry at v is zero
@@ -54,12 +54,14 @@ theorem cut_zero_ker (s : Finset V) (h : cut G s = 0) :
   simp
 
   -- Split the proof into two cases
-  by_cases h : v ∈ s
+  by_cases hv : v ∈ s
+  -- If hv : v ∈ s
   {
-    -- If h : v ∈ s
+    -- Split sum into two parts; one over s and one over sᶜ
+    rw[← Finset.sum_compl_add_sum s]
     sorry
   }
+  -- If hv : ¬(v ∈ s)
   {
-    -- If h : ¬(v ∈ s)
     sorry
   }
