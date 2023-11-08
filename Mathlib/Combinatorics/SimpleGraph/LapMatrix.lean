@@ -8,8 +8,7 @@ import Mathlib.Data.Matrix.Rank
 import Mathlib.Data.Fintype.Basic
 import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Real.Basic
-import Mathlib.LinearAlgebra.Basic
-import Mathlib.LinearAlgebra.Matrix.BilinearForm
+import Mathlib.Algebra.BigOperators.Basic
 
 open BigOperators Finset Matrix SimpleGraph
 
