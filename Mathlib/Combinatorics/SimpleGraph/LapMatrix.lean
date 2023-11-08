@@ -31,12 +31,28 @@ theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) =
   simp only [of_apply, sum_ite_eq, mem_univ, ite_true, sub_self]
   -- Could this be useful: adjMatrix_mulVec_const_apply?
 
+lemma vec_adjMatrix_vec (x : V → ℤ) :
+  x ⬝ᵥ mulVec (G.adjMatrix ℤ) x = ∑ i : V, ∑ j : V, if G.Adj i j then x i * x j else 0 := by
+  unfold dotProduct mulVec
+  unfold dotProduct
+  simp [mul_sum]
+
+lemma vec_degMatrix_vec (x : V → ℤ) :
+  x ⬝ᵥ mulVec (G.degMatrix ℤ) x = ∑ i : V, G.degree i * x i * x i := by
+  unfold dotProduct mulVec degMatrix dotProduct
+  simp [mul_sum, mul_assoc, mul_comm]
+
+lemma adj_sum_degree (i : V) : G.degree i = ∑ j : V, if G.Adj i j then 1 else 0 := by
+  sorry
+
 theorem vec_lapMatrix_vec (x : V → ℤ) :
   Matrix.toBilin' (G.lapMatrix ℤ) x x = ∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0 := by -- How to sum over edges (i,j)?
   rw [Matrix.toBilin'_apply']
   unfold lapMatrix
   rw [sub_mulVec]
   simp only [dotProduct_sub]
+  rw [vec_degMatrix_vec, vec_adjMatrix_vec]
+  simp only [adj_sum_degree]
   sorry
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
@@ -64,6 +80,7 @@ theorem no_name_yet (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x =
 of the kernel and show that it has size equal to the number of connected components-/
 
 
+-- https://leanprover-community.github.io/mathlib4_docs/Mathlib/LinearAlgebra/FiniteDimensional.html
 #check LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ)) -- kernel
 #check Module.rank ℤ (↥LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))) -- dimension of kernel
 #check Fintype.card G.ConnectedComponent -- Number of connected components
