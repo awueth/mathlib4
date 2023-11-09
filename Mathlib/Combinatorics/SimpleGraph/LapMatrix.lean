@@ -10,10 +10,11 @@ import Mathlib.Data.Fintype.Card
 import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Basic
 import Mathlib.LinearAlgebra.Matrix.BilinearForm
+import Mathlib.LinearAlgebra.Finrank
 
 open BigOperators Finset Matrix SimpleGraph
 
-variable {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj]
+variable {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj] [DecidableEq G.ConnectedComponent]
 
 def SimpleGraph.degMatrix (R : Type*) [Ring R] : Matrix V V R :=
   of fun a b ↦ if a = b then (G.degree a : R) else 0
@@ -75,15 +76,25 @@ theorem no_name_yet (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x =
   intros i j
   sorry
 
-
 /-We now have that functions in the kernel of L are constant on connected components. Find a basis
 of the kernel and show that it has size equal to the number of connected components-/
 
+/-Given a connected component, return the vector which is one on all vertices of the component
+and zero elsewhere-/
+def myBasis : G.ConnectedComponent → (V → ℤ) :=
+  fun c ↦ fun i ↦ if G.connectedComponentMk i = c then 1 else 0
 
--- https://leanprover-community.github.io/mathlib4_docs/Mathlib/LinearAlgebra/FiniteDimensional.html
-#check LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ)) -- kernel
-#check Module.rank ℤ (↥LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))) -- dimension of kernel
-#check Fintype.card G.ConnectedComponent -- Number of connected components
+lemma myBasis_linearIndependent : LinearIndependent ℤ (myBasis G) := by
+  sorry
+
+lemma myBasis_spanning : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ)) ≤ Submodule.span ℤ (Set.range (myBasis G)) := by
+  sorry
+
+#check Basis.mk {G.ConnectedComponent} myBasis_linearIndependent myBasis_spanning
+
+theorem main_result : Fintype.card G.ConnectedComponent =
+  FiniteDimensional.finrank ℤ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))) := by
+  sorry
 
 
 
