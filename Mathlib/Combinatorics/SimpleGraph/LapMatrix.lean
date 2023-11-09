@@ -43,8 +43,15 @@ lemma vec_degMatrix_vec (x : V → ℤ) :
   unfold dotProduct mulVec degMatrix dotProduct
   simp [mul_sum, mul_assoc, mul_comm]
 
-lemma adj_sum_degree (i : V) : G.degree i = ∑ j : V, if G.Adj i j then 1 else 0 := by
+lemma adj_sum_degree (i : V) : (G.degree i : ℤ) = ∑ j : V, if G.Adj i j then 1 else 0 := by
+  unfold degree neighborFinset neighborSet
+  simp only [sum_boole, mem_univ, forall_true_left, Nat.cast_inj]
   sorry
+
+lemma ite_sub (P : Prop) [Decidable P] (a b : ℤ) : ((if P then a else 0) - if P then b else 0) =
+  if P then a - b else 0 := by
+  split
+  repeat rfl
 
 theorem vec_lapMatrix_vec (x : V → ℤ) :
   Matrix.toBilin' (G.lapMatrix ℤ) x x = ∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0 := by -- How to sum over edges (i,j)?
@@ -52,28 +59,27 @@ theorem vec_lapMatrix_vec (x : V → ℤ) :
   unfold lapMatrix
   rw [sub_mulVec]
   simp only [dotProduct_sub]
-  rw [vec_degMatrix_vec, vec_adjMatrix_vec]
-  simp only [adj_sum_degree]
+  rw [vec_degMatrix_vec, vec_adjMatrix_vec, ← sum_sub_distrib]
+  simp only [adj_sum_degree, sum_mul, ← sum_sub_distrib, ite_mul, one_mul, zero_mul, ite_sub]
   sorry
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
-are connected, then x i = x j-/
-lemma vngnsdiojf (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x = 0) :
+are adjacent, then x i = x j-/
+lemma ker_adj_eq (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x = 0) :
   ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
   intros i j
   by_contra hn
   have hc : Matrix.toBilin' (G.lapMatrix ℤ) x x ≠ 0
-  {
-    rw [vec_lapMatrix_vec]
+  · rw [vec_lapMatrix_vec]
     sorry
-  }
   exact absurd h hc
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are reachable, then x i = x j-/
-theorem no_name_yet (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x = 0):
+theorem ker_reachable_eq (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x = 0):
   ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
   intros i j
+  unfold Reachable
   sorry
 
 /-We now have that functions in the kernel of L are constant on connected components. Find a basis
@@ -84,17 +90,23 @@ and zero elsewhere-/
 def myBasis : G.ConnectedComponent → (V → ℤ) :=
   fun c ↦ fun i ↦ if G.connectedComponentMk i = c then 1 else 0
 
-lemma myBasis_linearIndependent : LinearIndependent ℤ (myBasis G) := by
+lemma myBasis_linearIndependent :
+  LinearIndependent ℤ (myBasis G) := by
   sorry
 
-lemma myBasis_spanning : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ)) ≤ Submodule.span ℤ (Set.range (myBasis G)) := by
+lemma myBasis_spanning :
+  LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ)) ≤ Submodule.span ℤ (Set.range (myBasis G)) := by
   sorry
 
+#check myBasis_spanning
 #check Basis.mk {G.ConnectedComponent} myBasis_linearIndependent myBasis_spanning
 
-theorem main_result : Fintype.card G.ConnectedComponent =
+/-TODO Construct this basis-/
+variable (b : Basis G.ConnectedComponent ℤ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))))
+
+theorem rank_ker_lapMatrix_eq_card_ConnectedComponent : Fintype.card G.ConnectedComponent =
   FiniteDimensional.finrank ℤ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))) := by
-  sorry
+  rw [FiniteDimensional.finrank_eq_card_basis b]
 
 
 
