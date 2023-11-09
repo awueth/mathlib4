@@ -34,47 +34,70 @@ def vector_to_vertices (f : V → ℤ) :
 
 
 
-/-- If x ∈ {-1, 1}^V ∩ ker(L), then vector_to_vertices has cut 0
+/--
+If x ∈ {-1, 1}^V ∩ ker(L), then vector_to_vertices has cut 0
 theorem ker_cut_zero (f : V → ℤ) :
-  cut G (vector_to_vertices f) = Function.const V 0 := by
+  cut G (vector_to_vertices f) = Function.const V ℤ 0 := by
   sorry
 --/
 
 
+
 -- If s ⊂ V has cut 0, the vertices_to_vector ∈ ker(L)
-theorem cut_zero_ker (s : Finset V) (hs : cut G s = 0) :
+theorem cut_zero_ker (s : Finset V) (h_s : cut G s = 0) :
   mulVec (G.lapMatrix ℤ) (vertices_to_vector s) = 0 := by
 
   -- Check that the entry at v is zero
   ext v
-  simp
+  simp only [Pi.zero_apply]
 
-  -- Pluggin in all the definitions
-  unfold mulVec dotProduct lapMatrix degMatrix adjMatrix vertices_to_vector
-  simp
+  -- Write matrix multiplication as sum
+  unfold mulVec dotProduct lapMatrix
+  simp only [sub_apply]
 
-  -- Split the proof into two cases
-  by_cases hv : v ∈ s
-  -- If hv : v ∈ s
-  {
-    -- Split sum into two parts; one over s and one over sᶜ
-    rw[← Finset.sum_compl_add_sum s]
+  -- Plug in definitions
+  unfold degMatrix adjMatrix
+  simp only [of_apply]
 
-    have h1 : ∀ w, w ∈ sᶜ → 1 = 1
-    {
-      sorry
-    }
+  -- Split sum into two parts; one over s and one over sᶜ
+  rw[← Finset.sum_compl_add_sum s]
 
-    have h1 : ∀ v, v ∈ s → vertices_to_vector s v = 1
-    {
-      intro v hc
+  have h_in_sc_minusone : ∀ w : V, ¬ w ∈ s → vertices_to_vector s w = -1
+  · intro w hw
+    unfold vertices_to_vector
+    rw[if_neg]
+    exact hw
+
+  have h_in_s_one : ∀ w : V, w ∈ s → vertices_to_vector s w = 1
+  · intro w hw
+    unfold vertices_to_vector
+    rw[if_pos]
+    exact hw
+
+  -- Simplify the sum over w ∈ sᶜ using h_in_sc_minusone
+  have h_sum_sc : ∑ w in sᶜ, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0) * vertices_to_vector s w = - ∑ w in sᶜ, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0)
+  · simp
+    by_cases hv : v ∈ s
+    · rw[if_pos hv]
+      rw[if_pos hv]
+      exact rfl
+    · rw[if_neg hv]
+      rw[if_neg hv]
       unfold vertices_to_vector
-      rw[if_pos]
-      exact hc
-    }
-    sorry
-  }
-  -- If hv : ¬(v ∈ s)
-  {
-    sorry
-  }
+      rw[if_neg hv]
+      simp
+
+  -- Simplify the sum over w ∈ s using h_in_s_one
+  have h_sum_s : ∑ w in s, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0) * vertices_to_vector s w = ∑ w in s, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0)
+  · simp
+    by_cases hv : v ∈ s
+    · rw[if_pos hv]
+      rw[if_pos hv]
+      unfold vertices_to_vector
+      rw[if_pos hv]
+      simp
+    · rw[if_neg hv]
+      rw[if_neg hv]
+
+
+  sorry
