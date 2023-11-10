@@ -30,7 +30,6 @@ theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) =
   simp only [Pi.one_apply, mul_one]
   unfold degMatrix
   simp only [of_apply, sum_ite_eq, mem_univ, ite_true, sub_self]
-  -- Could this be useful: adjMatrix_mulVec_const_apply?
 
 lemma vec_adjMatrix_vec (x : V → ℝ) :
   x ⬝ᵥ mulVec (G.adjMatrix ℝ) x = ∑ i : V, ∑ j : V, if G.Adj i j then x i * x j else 0 := by
@@ -43,16 +42,12 @@ lemma vec_degMatrix_vec (x : V → ℝ) :
   unfold dotProduct mulVec degMatrix dotProduct
   simp [mul_sum, mul_assoc, mul_comm]
 
-lemma adj_sum_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j then 1 else 0 := by
-  unfold degree neighborFinset neighborSet
-  rw [sum_boole, Nat.cast_inj]
-  have h : Set.toFinset {w | Adj G i w} = (filter (fun x ↦ Adj G i x) univ)
-  · apply Finset.ext
-    intro j
-    apply Iff.intro
-    · sorry
-    · sorry
-  simp only [h, mem_univ, forall_true_left]
+lemma sum_adj_eq_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j then 1 else 0 := by
+  have h : (∑ j : V, if G.Adj i j then 1 else 0) = (G.adjMatrix ℝ).mulVec (Function.const V 1) i
+  · unfold mulVec dotProduct
+    simp only [sum_boole, mem_univ, forall_true_left, adjMatrix_apply, Function.const_apply, mul_one]
+  rw [h]
+  simp [degree]
 
 lemma ite_sub_distr (P : Prop) [Decidable P] (a b : ℝ) : ((if P then a else 0) - if P then b else 0) =
   if P then a - b else 0 := by
@@ -80,22 +75,11 @@ theorem vec_lapMatrix_vec (x : V → ℝ) :
   rw [sub_mulVec]
   simp only [dotProduct_sub]
   rw [vec_degMatrix_vec, vec_adjMatrix_vec, ← sum_sub_distrib]
-  simp only [adj_sum_degree, sum_mul, ← sum_sub_distrib, ite_mul, one_mul, zero_mul, ite_sub_distr]
+  simp only [sum_adj_eq_degree, sum_mul, ← sum_sub_distrib, ite_mul, one_mul, zero_mul, ite_sub_distr]
   rw [massage]
-  conv =>
-    lhs
-    arg 1
-    arg 2
-    rw [switcheroo]
+  conv => lhs; arg 1; arg 2; rw [switcheroo]
   simp [← sum_add_distrib]
-  conv =>
-    lhs
-    arg 1
-    arg 2
-    intro i
-    arg 2
-    intro j
-    rw [ite_add_distr]
+  conv => lhs; arg 1; arg 2; intro i; arg 2; intro j; rw [ite_add_distr]
   field_simp
   rw [sum_congr]
   rfl
