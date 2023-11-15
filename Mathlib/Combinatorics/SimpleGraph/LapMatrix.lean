@@ -106,7 +106,7 @@ lemma ker_adj_eq (x : V → ℝ) (h : Matrix.toBilin' (G.lapMatrix ℝ) x x = 0)
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are reachable, then x i = x j-/
-theorem ker_reachable_eq (x : V → ℤ) (h : Matrix.toBilin' (G.lapMatrix ℤ) x x = 0):
+theorem ker_reachable_eq (x : V → ℝ) (h : Matrix.toBilin' (G.lapMatrix ℝ) x x = 0) :
   ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
   intros i j
   unfold Reachable
@@ -117,31 +117,32 @@ of the kernel and show that it has size equal to the number of connected compone
 
 /-Given a connected component, return the vector which is one on all vertices of the component
 and zero elsewhere-/
-def myBasis : G.ConnectedComponent → (V → ℤ) :=
-  fun c ↦ fun i ↦ if G.connectedComponentMk i = c then 1 else 0
+def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
+  ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, sorry⟩
 
 lemma myBasis_linearIndependent :
-  LinearIndependent ℤ (myBasis G) := by
+  LinearIndependent ℝ (myBasis G) := by
+  rw [Fintype.linearIndependent_iff]
+  intro g
+  unfold myBasis
+  simp
+  conv =>
+    lhs
+    lhs
+    arg 2
+    intro c
+    arg 1
+    -- ????
   sorry
+
 
 lemma myBasis_spanning :
-  LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ)) ≤ Submodule.span ℤ (Set.range (myBasis G)) := by
+  ⊤ ≤ Submodule.span ℝ (Set.range (myBasis G)) := by
   sorry
 
-#check myBasis_spanning
-#check Basis.mk {G.ConnectedComponent} myBasis_linearIndependent myBasis_spanning
-
-/-TODO Construct this basis-/
-variable (b : Basis G.ConnectedComponent ℤ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))))
-
 theorem rank_ker_lapMatrix_eq_card_ConnectedComponent : Fintype.card G.ConnectedComponent =
-  FiniteDimensional.finrank ℤ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℤ))) := by
-  rw [FiniteDimensional.finrank_eq_card_basis b]
-
-
-
-
-
+  FiniteDimensional.finrank ℝ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ))) := by
+  rw [FiniteDimensional.finrank_eq_card_basis (Basis.mk (myBasis_linearIndependent G) (myBasis_spanning G))]
 
 -- This stuff down here probably won't ne needed anymore
 /-
