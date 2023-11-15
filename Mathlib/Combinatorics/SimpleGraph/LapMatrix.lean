@@ -133,7 +133,6 @@ lemma myBasis_linearIndependent :
     intro c
     arg 1
     -- ????
-  sorry
 
 
 lemma myBasis_spanning :
