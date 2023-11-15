@@ -60,44 +60,46 @@ theorem cut_zero_ker (s : Finset V) (h_s : cut G s = 0) :
   simp only [of_apply]
 
   -- Split sum into two parts; one over s and one over sᶜ
-  rw[← Finset.sum_compl_add_sum s]
+  rw [← Finset.sum_compl_add_sum s]
 
-  have h_in_sc_minusone : ∀ w : V, ¬ w ∈ s → vertices_to_vector s w = -1
+  have h_in_sc_minusone : ∀ w : V, w ∈ sᶜ  → vertices_to_vector s w = -1
   · intro w hw
     unfold vertices_to_vector
-    rw[if_neg]
+    rw [if_neg]
+    rw [← Finset.mem_compl]
     exact hw
 
   have h_in_s_one : ∀ w : V, w ∈ s → vertices_to_vector s w = 1
   · intro w hw
     unfold vertices_to_vector
-    rw[if_pos]
+    rw [if_pos]
     exact hw
 
-  -- Simplify the sum over w ∈ sᶜ using h_in_sc_minusone
-  have h_sum_sc : ∑ w in sᶜ, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0) * vertices_to_vector s w = - ∑ w in sᶜ, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0)
+  have h_sum_sc : ∑ w in sᶜ, ((if v = w then ↑(degree G v) else 0) - if Adj G v w then 1 else 0) * vertices_to_vector s w = ∑ w in sᶜ, ((if v = w then ↑(degree G v) else 0) - if Adj G v w then 1 else 0) * (-1 : ℤ)
+  · apply Finset.sum_congr rfl
+    intro w hw
+    rw [h_in_sc_minusone w hw]
+
+  have h_sum_s : ∑ w in s, ((if v = w then ↑(degree G v) else 0) - if Adj G v w then 1 else 0) * vertices_to_vector s w = ∑ w in s, ((if v = w then ↑(degree G v) else (0 : ℤ)) - if Adj G v w then 1 else 0)
+  · apply Finset.sum_congr rfl
+    intro w hw
+    rw [h_in_s_one w hw]
+    simp only [mul_one]
+
+  rw [h_sum_sc, h_sum_s]
+
+  have h_minus_sum_eq_sum_minus : ∑ w in sᶜ, ((if v = w then ↑(degree G v) else 0) - if Adj G v w then 1 else 0) * (-1 : ℤ) = - ∑ w in sᶜ, ((if v = w then ↑(degree G v) else (0 : ℤ)) - if Adj G v w then 1 else 0)
   · simp
-    by_cases hv : v ∈ s
-    · rw[if_pos hv]
-      rw[if_pos hv]
-      exact rfl
-    · rw[if_neg hv]
-      rw[if_neg hv]
-      unfold vertices_to_vector
-      rw[if_neg hv]
-      simp
 
-  -- Simplify the sum over w ∈ s using h_in_s_one
-  have h_sum_s : ∑ w in s, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0) * vertices_to_vector s w = ∑ w in s, (if v = w then (degree G v) else 0 - if Adj G v w then 1 else 0)
-  · simp
-    by_cases hv : v ∈ s
-    · rw[if_pos hv]
-      rw[if_pos hv]
-      unfold vertices_to_vector
-      rw[if_pos hv]
-      simp
-    · rw[if_neg hv]
-      rw[if_neg hv]
+  rw [h_minus_sum_eq_sum_minus]
+
+  by_cases h_v : v ∈ s
+  ·
+    sorry
+  ·
+    sorry
 
 
-  sorry
+
+
+-- SimpleGraph.irrefl
