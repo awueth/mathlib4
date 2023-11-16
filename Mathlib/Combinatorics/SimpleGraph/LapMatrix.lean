@@ -69,8 +69,8 @@ lemma switcheroo (x : V → ℝ) : (∑ i : V, ∑ x_1 : V, if Adj G i x_1 then 
   sorry
 
 theorem vec_lapMatrix_vec (x : V → ℝ) :
-  Matrix.toBilin' (G.lapMatrix ℝ) x x = (∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0) / 2 := by
-  rw [Matrix.toBilin'_apply']
+  toLinearMap₂' (G.lapMatrix ℝ) x x = (∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0) / 2 := by
+  rw [toLinearMap₂'_apply']
   unfold lapMatrix
   rw [sub_mulVec]
   simp only [dotProduct_sub]
@@ -95,22 +95,38 @@ theorem vec_lapMatrix_vec (x : V → ℝ) :
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are adjacent, then x i = x j-/
-lemma ker_adj_eq (x : V → ℝ) (h : Matrix.toBilin' (G.lapMatrix ℝ) x x = 0) :
-  ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
+lemma ker_adj_eq2 (x : V → ℝ) :
+  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔ ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
+  apply Iff.intro
+  {
+  intro h
   intros i j
   by_contra hn
-  have hc : Matrix.toBilin' (G.lapMatrix ℝ) x x ≠ 0
+  have hc : toLinearMap₂' (G.lapMatrix ℝ) x x ≠ 0
   · rw [vec_lapMatrix_vec]
     sorry
   exact absurd h hc
+  }
+  {
+    intro h
+    rw [vec_lapMatrix_vec]
+    sorry
+  }
+
+theorem ker_adj_eq (x : V → ℝ) :
+  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
+  sorry
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are reachable, then x i = x j-/
-theorem ker_reachable_eq (x : V → ℝ) (h : Matrix.toBilin' (G.lapMatrix ℝ) x x = 0) :
+lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔
   ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
-  intros i j
-  unfold Reachable
   sorry
+
+theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔
+  ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
+  sorry
+
 
 /-We now have that functions in the kernel of L are constant on connected components. Find a basis
 of the kernel and show that it has size equal to the number of connected components-/
@@ -118,7 +134,19 @@ of the kernel and show that it has size equal to the number of connected compone
 /-Given a connected component, return the vector which is one on all vertices of the component
 and zero elsewhere-/
 def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
-  ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, sorry⟩
+  ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, by
+  rw [LinearMap.mem_ker, ker_reachable_eq]
+  intro i j h
+  split
+  · split
+    · rfl
+    · simp only [one_ne_zero]
+      sorry
+  · split
+    · simp only [zero_ne_one]
+      sorry
+    · rfl
+  ⟩
 
 lemma myBasis_linearIndependent :
   LinearIndependent ℝ (myBasis G) := by
@@ -133,7 +161,7 @@ lemma myBasis_linearIndependent :
     intro c
     arg 1
     -- ????
-
+  sorry
 
 lemma myBasis_spanning :
   ⊤ ≤ Submodule.span ℝ (Set.range (myBasis G)) := by
@@ -142,6 +170,11 @@ lemma myBasis_spanning :
 theorem rank_ker_lapMatrix_eq_card_ConnectedComponent : Fintype.card G.ConnectedComponent =
   FiniteDimensional.finrank ℝ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ))) := by
   rw [FiniteDimensional.finrank_eq_card_basis (Basis.mk (myBasis_linearIndependent G) (myBasis_spanning G))]
+
+
+
+
+
 
 -- This stuff down here probably won't ne needed anymore
 /-
