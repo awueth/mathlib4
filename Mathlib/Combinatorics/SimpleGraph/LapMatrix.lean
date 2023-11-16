@@ -173,7 +173,24 @@ lemma ker_adj_eq2 (x : V → ℝ) :
 are reachable, then x i = x j-/
 lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔
   ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
-  sorry
+  rw [ker_adj_eq2]
+  apply Iff.intro
+  · intro h i j
+    unfold Reachable
+    simp
+    intro w
+    induction' w with w i j _ hA _ h'
+    · rfl
+    · rw [← h']
+      specialize h i j
+      rw [h]
+      exact hA
+  · intro h i j hA
+    specialize h i j
+    have hR : Reachable G i j
+    · simp only [Adj.reachable hA]
+    simp [hR] at h
+    exact h
 
 
 
