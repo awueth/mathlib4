@@ -115,7 +115,9 @@ lemma ker_adj_eq2 (x : V → ℝ) :
 
 theorem ker_adj_eq (x : V → ℝ) :
   Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
-  sorry
+  have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
+  · sorry
+  · simp only [h, ker_adj_eq2]
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are reachable, then x i = x j-/
@@ -125,7 +127,9 @@ lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
 
 theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔
   ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
-  sorry
+  have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
+  · sorry
+  · simp only [h, ker_reachable_eq2]
 
 
 /-We now have that functions in the kernel of L are constant on connected components. Find a basis
