@@ -64,9 +64,21 @@ lemma ite_add_distr (P : Prop) [Decidable P] (a b : ℝ) : ((if P then a else 0)
 lemma massage (f : V → ℝ) : ∑ i : V, f i = (∑ i : V, f i + ∑ i : V, f i) / 2 := by
   rw [half_add_self]
 
-lemma switcheroo (x : V → ℝ) : (∑ i : V, ∑ x_1 : V, if Adj G i x_1 then x i * x i - x i * x x_1 else 0)
-  = (∑ i : V, ∑ x_1 : V, if Adj G i x_1 then x x_1 * x x_1 - x x_1 * x i else 0) := by
-  sorry
+lemma stubid_lemma (x : V → ℝ) (i j : V) : (if Adj G i j then x j * x j - x j * x i else 0)
+  = (if Adj G j i then x j * x j - x j * x i else 0) := by
+  simp [adj_comm]
+
+lemma switcheroo (x : V → ℝ) : (∑ i : V, ∑ j : V, if Adj G i j then x i * x i - x i * x j else 0)
+  = (∑ i : V, ∑ j : V, if Adj G i j then x j * x j - x j * x i else 0) := by
+  conv =>
+    rhs
+    arg 2
+    intro i
+    arg 2
+    intro j
+    rw [stubid_lemma]
+  rw [Finset.sum_comm]
+
 
 theorem vec_lapMatrix_vec (x : V → ℝ) :
   toLinearMap₂' (G.lapMatrix ℝ) x x = (∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0) / 2 := by
@@ -113,17 +125,20 @@ lemma ker_adj_eq2 (x : V → ℝ) :
     sorry
   }
 
-theorem ker_adj_eq (x : V → ℝ) :
-  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
-  have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
-  · sorry
-  · simp only [h, ker_adj_eq2]
-
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are reachable, then x i = x j-/
 lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔
   ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
   sorry
+
+
+
+/-Essentially the same as above-/
+theorem ker_adj_eq (x : V → ℝ) :
+  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
+  have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
+  · sorry
+  · simp only [h, ker_adj_eq2]
 
 theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔
   ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
@@ -132,10 +147,12 @@ theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
   · simp only [h, ker_reachable_eq2]
 
 
-/-We now have that functions in the kernel of L are constant on connected components. Find a basis
-of the kernel and show that it has size equal to the number of connected components-/
 
-/-Given a connected component, return the vector which is one on all vertices of the component
+
+/-We now have that functions in the kernel of L are constant on connected components. Find a basis
+of the kernel and show that it has size equal to the number of connected components
+
+Given a connected component, return the vector which is one on all vertices of the component
 and zero elsewhere-/
 def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
   ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, by
