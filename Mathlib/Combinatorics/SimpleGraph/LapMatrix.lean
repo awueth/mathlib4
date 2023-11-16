@@ -79,7 +79,6 @@ lemma switcheroo (x : V → ℝ) : (∑ i : V, ∑ j : V, if Adj G i j then x i 
     rw [stubid_lemma]
   rw [Finset.sum_comm]
 
-
 theorem vec_lapMatrix_vec (x : V → ℝ) :
   toLinearMap₂' (G.lapMatrix ℝ) x x = (∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0) / 2 := by
   rw [toLinearMap₂'_apply']
@@ -114,15 +113,60 @@ lemma ker_adj_eq2 (x : V → ℝ) :
   intro h
   intros i j
   by_contra hn
-  have hc : toLinearMap₂' (G.lapMatrix ℝ) x x ≠ 0
-  · rw [vec_lapMatrix_vec]
-    sorry
-  exact absurd h hc
+  have hc : toLinearMap₂' (G.lapMatrix ℝ) x x > 0
+  · rw [vec_lapMatrix_vec, sum_div]
+    apply sum_pos'
+    · simp [sum_div]
+      intro i
+      apply sum_nonneg'
+      intro j
+      split_ifs
+      · apply div_nonneg_iff.mpr
+        left
+        constructor
+        · exact sq_nonneg (x i - x j)
+        · exact zero_le_two
+      · rw [zero_div]
+    · simp only [mem_univ, true_and]
+      use i
+      rw [sum_div]
+      apply sum_pos'
+      · simp only [mem_univ, forall_true_left]
+        intro j
+        apply div_nonneg_iff.mpr
+        left
+        constructor
+        · split
+          · exact sq_nonneg (x i - x j)
+          · rfl
+        · exact zero_le_two
+      · simp only [mem_univ, true_and]
+        use j
+        push_neg at hn
+        simp only [hn, ite_true, gt_iff_lt, sub_pos]
+        apply div_pos_iff.mpr
+        left
+        constructor
+        · apply sq_pos_of_ne_zero
+          rw [sub_ne_zero]
+          exact hn.2
+        · exact zero_lt_two
+  clear hn i j
+  absurd hc
+  rw [h]
+  simp only [lt_self_iff_false, not_false_eq_true]
   }
   {
     intro h
-    rw [vec_lapMatrix_vec]
-    sorry
+    rw [vec_lapMatrix_vec, sum_div]
+    apply sum_eq_zero
+    intro i
+    simp only [mem_univ, div_eq_zero_iff, OfNat.ofNat_ne_zero, or_false, forall_true_left]
+    apply sum_eq_zero
+    intro j
+    specialize h i j
+    simp only [mem_univ, ite_eq_right_iff, zero_lt_two, pow_eq_zero_iff, forall_true_left, sub_eq_zero]
+    exact h
   }
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
