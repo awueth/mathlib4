@@ -141,15 +141,17 @@ def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (
   ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, by
   rw [LinearMap.mem_ker, ker_reachable_eq]
   intro i j h
-  split
-  · split
-    · rfl
-    · simp only [one_ne_zero]
-      sorry
-  · split
-    · simp only [zero_ne_one]
-      sorry
-    · rfl
+  split_ifs with h₁ h₂ h₃
+  · rfl
+  · simp only [one_ne_zero]
+    rw [← ConnectedComponent.eq] at h
+    absurd h₂
+    rw [← h₁, h]
+  · simp only [zero_ne_one]
+    rw [← ConnectedComponent.eq] at h
+    absurd h₁
+    rw [← h₃, h]
+  · rfl
   ⟩
 
 lemma myBasis_linearIndependent :
