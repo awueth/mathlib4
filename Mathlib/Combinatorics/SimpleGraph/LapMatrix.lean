@@ -241,7 +241,14 @@ lemma myBasis_linearIndependent :
   intro g h0
   rw [Subtype.ext_iff] at h0
   have h : ∑ c : ConnectedComponent G, g c • myBasis G c = fun i ↦ ∑ c : ConnectedComponent G, if G.connectedComponentMk i = c then g c else 0
-  · ext i
+  · unfold myBasis
+    conv => lhs; simp;
+    have hs : ∀ c,  g c • (fun i ↦ if connectedComponentMk G i = c then (1 : ℝ) else 0) = fun i ↦ if connectedComponentMk G i = c then g c else 0
+    · intro c
+      ext j
+      simp only [Pi.smul_apply, smul_eq_mul, mul_ite, mul_one, mul_zero]
+    simp only [hs]
+    exact sum_fn univ fun c i ↦ if connectedComponentMk G i = c then g c else 0 -- ????????? used apply?
   rw [h] at h0
   simp only [sum_ite_eq, mem_univ, ite_true, ZeroMemClass.coe_zero] at h0
   intro c
