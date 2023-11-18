@@ -108,7 +108,7 @@ theorem vec_lapMatrix_vec (x : V → ℝ) :
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are adjacent, then x i = x j-/
 lemma ker_adj_eq2 (x : V → ℝ) :
-  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔ ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
+  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
   apply Iff.intro
   {
   intro h
@@ -173,7 +173,7 @@ lemma ker_adj_eq2 (x : V → ℝ) :
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are reachable, then x i = x j-/
 lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔
-  ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
+  ∀ i j : V, G.Reachable i j → x i = x j := by
   rw [ker_adj_eq2]
   apply Iff.intro
   · intro h i j
@@ -197,18 +197,16 @@ lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
 
 /-Essentially the same as above-/
 theorem ker_adj_eq (x : V → ℝ) :
-  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀i : V, ∀j : V, G.Adj i j → x i = x j := by
+  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
   have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
   · sorry
   · simp only [h, ker_adj_eq2]
 
 theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔
-  ∀i : V, ∀j : V, G.Reachable i j → x i = x j := by
+  ∀ i j : V, G.Reachable i j → x i = x j := by
   have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
   · sorry
   · simp only [h, ker_reachable_eq2]
-
-
 
 
 /-We now have that functions in the kernel of L are constant on connected components. Find a basis
@@ -254,7 +252,14 @@ lemma myBasis_spanning :
   intro x _
   rw [mem_span_range_iff_exists_fun]
   have h : ∀ (i j : V) (w : SimpleGraph.Walk G i j), SimpleGraph.Walk.IsPath w → x.val i = x.val j
-  · sorry
+  · intro i j w hp
+    suffices hr : Reachable G i j
+    · have h' : ∀ (i j : V), Reachable G i j → x.val i = x.val j
+      · rw [← ker_reachable_eq G x, LinearMap.map_coe_ker]
+      · specialize h' i j
+        apply h'
+        exact hr
+    simp only [Walk.reachable w]
   use ConnectedComponent.lift x.val h
   ext j
   simp only [AddSubmonoid.coe_finset_sum, Submodule.coe_toAddSubmonoid, SetLike.val_smul,
