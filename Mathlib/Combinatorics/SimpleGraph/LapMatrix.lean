@@ -231,20 +231,27 @@ def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (
   · rfl
   ⟩
 
+variable (c0 : G.ConnectedComponent)
+#check (myBasis G c0).val
+
+
 lemma myBasis_linearIndependent :
   LinearIndependent ℝ (myBasis G) := by
   rw [Fintype.linearIndependent_iff]
-  intro g
-  unfold myBasis
-  simp
-  conv =>
-    lhs
-    lhs
-    arg 2
-    intro c
-    arg 1
-    -- ????
-  sorry
+  intro g h0
+  rw [Subtype.ext_iff] at h0
+  have h : ∑ c : ConnectedComponent G, g c • myBasis G c = fun i ↦ ∑ c : ConnectedComponent G, if G.connectedComponentMk i = c then g c else 0
+  · ext i
+  rw [h] at h0
+  simp only [sum_ite_eq, mem_univ, ite_true, ZeroMemClass.coe_zero] at h0
+  intro c
+  have he : ∃ i : V, G.connectedComponentMk i = c
+  · exact Quot.exists_rep c
+  obtain ⟨i, h'⟩ := he
+  rw [← h']
+  apply congrFun h0
+
+
 
 
 lemma myBasis_spanning :
@@ -252,7 +259,7 @@ lemma myBasis_spanning :
   intro x _
   rw [mem_span_range_iff_exists_fun]
   have h : ∀ (i j : V) (w : SimpleGraph.Walk G i j), SimpleGraph.Walk.IsPath w → x.val i = x.val j
-  · intro i j w hp
+  · intro i j w _
     suffices hr : Reachable G i j
     · have h' : ∀ (i j : V), Reachable G i j → x.val i = x.val j
       · rw [← ker_reachable_eq G x, LinearMap.map_coe_ker]
