@@ -11,6 +11,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Basic
 import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Finrank
+import aesop
 
 open BigOperators Finset Matrix SimpleGraph
 
@@ -248,28 +249,18 @@ lemma myBasis_linearIndependent :
   sorry
 
 
---variable (y : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ))) (i0 : V)
-
---#check y.val i0
-
-noncomputable def coeff (x : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ))) : G.ConnectedComponent → ℝ :=
-  fun c ↦ if h : ∃ i, G.connectedComponentMk i = c then x.val (Classical.choose h) else 0
-
 lemma myBasis_spanning :
   ⊤ ≤ Submodule.span ℝ (Set.range (myBasis G)) := by
   intro x _
   rw [mem_span_range_iff_exists_fun]
-  use coeff G x
+  have h : ∀ (i j : V) (w : SimpleGraph.Walk G i j), SimpleGraph.Walk.IsPath w → x.val i = x.val j
+  · sorry
+  use ConnectedComponent.lift x.val h
   ext j
   simp only [AddSubmonoid.coe_finset_sum, Submodule.coe_toAddSubmonoid, SetLike.val_smul,
     Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
   unfold myBasis
-  simp only [mul_ite, mul_one, mul_zero, sum_ite_eq, mem_univ, ite_true]
-  unfold coeff
-  split_ifs with h
-  . sorry
-  . sorry
-
+  simp only [mul_ite, mul_one, mul_zero, sum_ite_eq, mem_univ, ConnectedComponent.lift_mk, ite_true]
 
 theorem rank_ker_lapMatrix_eq_card_ConnectedComponent : Fintype.card G.ConnectedComponent =
   FiniteDimensional.finrank ℝ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ))) := by
