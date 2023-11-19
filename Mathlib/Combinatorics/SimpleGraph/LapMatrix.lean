@@ -248,15 +248,14 @@ lemma sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : 
     exact hij
 
 
-theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_symm : IsSymm A) (x : V → ℝ) :
+theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (x : V → ℝ) :
   Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
-  have h_her : IsHermitian A := by unfold IsHermitian; rw [conjTranspose_eq_transpose_of_trivial, h_symm]
   apply Iff.intro
   · simp only [LinearMap.ext_iff, toLinearMap₂'_apply']
-    conv => rhs; intro y; rw [← h_her, conjTranspose_eq_transpose_of_trivial,
+    conv => rhs; intro y; rw [← h_psd.1, conjTranspose_eq_transpose_of_trivial,
                               mulVec_transpose, dotProduct_comm, ←dotProduct_mulVec];
-    simp only [Matrix.IsHermitian.spectral_theorem' h_her, IsROrC.ofReal_real_eq_id, Function.comp.left_id]
-    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_her)), ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her,
+    simp only [Matrix.IsHermitian.spectral_theorem' h_psd.1, IsROrC.ofReal_real_eq_id, Function.comp.left_id]
+    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_psd.1)), ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_psd.1,
         conjTranspose_eq_transpose_of_trivial, mul_assoc, mul_assoc, ←mul_assoc, ← Matrix.mulVec_mulVec]
 
     intro h0 y
@@ -276,25 +275,14 @@ theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_symm : Is
   · intro h0; rw [h0, LinearMap.zero_apply]
 
 
-
-
-
 /-Essentially the same as above-/
 theorem ker_adj_eq (x : V → ℝ) :
   Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
-  have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
-  · rw [spd_matrix_zero]
-    · simp only [isPosSemidef_lapMatrix]
-    · simp only [isSymm_lapMatrix]
-  · simp only [h, ker_adj_eq2]
+  rw [← spd_matrix_zero (G.lapMatrix ℝ) (isPosSemidef_lapMatrix G), ker_adj_eq2]
 
 theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔
   ∀ i j : V, G.Reachable i j → x i = x j := by
-  have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
-  · rw [spd_matrix_zero]
-    · simp only [isPosSemidef_lapMatrix]
-    · simp only [isSymm_lapMatrix]
-  · simp only [h, ker_reachable_eq2]
+  rw [← spd_matrix_zero (G.lapMatrix ℝ) (isPosSemidef_lapMatrix G), ker_reachable_eq2]
 
 
 /-We now have that functions in the kernel of L are constant on connected components. Find a basis
