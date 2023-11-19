@@ -46,8 +46,7 @@ theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) =
 
 lemma vec_adjMatrix_vec (x : V → ℝ) :
   x ⬝ᵥ mulVec (G.adjMatrix ℝ) x = ∑ i : V, ∑ j : V, if G.Adj i j then x i * x j else 0 := by
-  unfold dotProduct mulVec
-  unfold dotProduct
+  unfold dotProduct mulVec dotProduct
   simp [mul_sum]
 
 lemma vec_degMatrix_vec (x : V → ℝ) :
@@ -62,20 +61,17 @@ lemma sum_adj_eq_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j t
   rw [h]
   simp [degree]
 
-lemma ite_sub_distr (P : Prop) [Decidable P] (a b : ℝ) : ((if P then a else 0) - if P then b else 0) =
-  if P then a - b else 0 := by
+lemma ite_sub_distr (P : Prop) [Decidable P] (a b : ℝ) :
+  ((if P then a else 0) - if P then b else 0) = if P then a - b else 0 := by
   split
-  rfl
-  rw [sub_self]
+  · rfl
+  · rw [sub_self]
 
-lemma ite_add_distr (P : Prop) [Decidable P] (a b : ℝ) : ((if P then a else 0) + if P then b else 0) =
-  if P then a + b else 0 := by
+lemma ite_add_distr (P : Prop) [Decidable P] (a b : ℝ) :
+  ((if P then a else 0) + if P then b else 0) = if P then a + b else 0 := by
   split
-  rfl
-  rw [add_zero]
-
-lemma massage (f : V → ℝ) : ∑ i : V, f i = (∑ i : V, f i + ∑ i : V, f i) / 2 := by
-  rw [half_add_self]
+  · rfl
+  · rw [add_zero]
 
 lemma stubid_lemma (x : V → ℝ) (i j : V) : (if Adj G i j then x j * x j - x j * x i else 0)
   = (if Adj G j i then x j * x j - x j * x i else 0) := by
@@ -100,7 +96,7 @@ theorem vec_lapMatrix_vec (x : V → ℝ) :
   simp only [dotProduct_sub]
   rw [vec_degMatrix_vec, vec_adjMatrix_vec, ← sum_sub_distrib]
   simp only [sum_adj_eq_degree, sum_mul, ← sum_sub_distrib, ite_mul, one_mul, zero_mul, ite_sub_distr]
-  rw [massage]
+  rw [← half_add_self (∑ x_1 : V, ∑ x_2 : V, if Adj G x_1 x_2 then x x_1 * x x_1 - x x_1 * x x_2 else 0)]
   conv => lhs; arg 1; arg 2; rw [switcheroo]
   simp [← sum_add_distrib]
   conv => lhs; arg 1; arg 2; intro i; arg 2; intro j; rw [ite_add_distr]
@@ -144,56 +140,51 @@ are adjacent, then x i = x j-/
 lemma ker_adj_eq2 (x : V → ℝ) :
   Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
   apply Iff.intro
-  {
-  intro h
-  intros i j
-  by_contra hn
-  have hc : toLinearMap₂' (G.lapMatrix ℝ) x x > 0
-  · rw [vec_lapMatrix_vec, sum_div]
-    apply sum_pos'
-    · simp [sum_div]
-      intro i
-      apply sum_nonneg'
-      intro j
-      split_ifs
-      · apply div_nonneg_iff.mpr
-        left
-        constructor
-        · exact sq_nonneg (x i - x j)
-        · exact zero_le_two
-      · rw [zero_div]
-    · simp only [mem_univ, true_and]
-      use i
-      rw [sum_div]
+  · intro h i j
+    by_contra hn
+    have hc : toLinearMap₂' (G.lapMatrix ℝ) x x > 0
+    · rw [vec_lapMatrix_vec, sum_div]
       apply sum_pos'
-      · simp only [mem_univ, forall_true_left]
+      · simp [sum_div]
+        intro i
+        apply sum_nonneg'
         intro j
-        apply div_nonneg_iff.mpr
-        left
-        constructor
-        · split
-          · simp only [Real.rpow_two, sq_nonneg]
-          · rfl
-        · exact zero_le_two
+        split_ifs
+        · apply div_nonneg_iff.mpr
+          left
+          constructor
+          · exact sq_nonneg (x i - x j)
+          · exact zero_le_two
+        · rw [zero_div]
       · simp only [mem_univ, true_and]
-        use j
-        push_neg at hn
-        simp only [hn, ite_true, gt_iff_lt, sub_pos]
-        apply div_pos_iff.mpr
-        left
-        constructor
-        · rw [Real.rpow_two]
-          apply sq_pos_of_ne_zero
-          rw [sub_ne_zero]
-          exact hn.2
-        · exact zero_lt_two
-  clear hn i j
-  absurd hc
-  rw [h]
-  simp only [lt_self_iff_false, not_false_eq_true]
-  }
-  {
-    intro h
+        use i
+        rw [sum_div]
+        apply sum_pos'
+        · simp only [mem_univ, forall_true_left]
+          intro j
+          apply div_nonneg_iff.mpr
+          left
+          constructor
+          · split
+            · simp only [Real.rpow_two, sq_nonneg]
+            · rfl
+          · exact zero_le_two
+        · simp only [mem_univ, true_and]
+          use j
+          push_neg at hn
+          simp only [hn, ite_true, gt_iff_lt, sub_pos]
+          apply div_pos_iff.mpr
+          left
+          constructor
+          · rw [Real.rpow_two]
+            apply sq_pos_of_ne_zero
+            rw [sub_ne_zero]
+            exact hn.2
+          · exact zero_lt_two
+    clear hn i j
+    absurd hc
+    simp only [h, lt_self_iff_false, not_false_eq_true]
+  · intro h
     rw [vec_lapMatrix_vec, sum_div]
     apply sum_eq_zero
     intro i
@@ -204,7 +195,6 @@ lemma ker_adj_eq2 (x : V → ℝ) :
     simp only [mem_univ, Real.rpow_two, ite_eq_right_iff, zero_lt_two, pow_eq_zero_iff, sub_eq_zero,
       forall_true_left]
     exact h
-  }
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
 are reachable, then x i = x j-/
@@ -255,23 +245,19 @@ theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (x : V → �
     conv => rhs; intro y; rw [← h_psd.1, conjTranspose_eq_transpose_of_trivial,
                               mulVec_transpose, dotProduct_comm, ←dotProduct_mulVec];
     simp only [Matrix.IsHermitian.spectral_theorem' h_psd.1, IsROrC.ofReal_real_eq_id, Function.comp.left_id]
-    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_psd.1)), ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_psd.1,
+    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_psd.1)),
+        ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_psd.1,
         conjTranspose_eq_transpose_of_trivial, mul_assoc, mul_assoc, ←mul_assoc, ← Matrix.mulVec_mulVec]
-
-    intro h0 y
-    rw [dotProduct_mulVec, ← mulVec_transpose] at h0
-    simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
-    rw [h0]
-    simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
-
-    simp only [isDiag_diagonal]
-
-    intro i
-    rw [diagonal_apply_eq]
-    apply PosSemidef.eigenvalues_nonneg
-    exact h_psd
-
-
+    · intro h0 y
+      rw [dotProduct_mulVec, ← mulVec_transpose] at h0
+      simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
+      rw [h0]
+      simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
+    · simp only [isDiag_diagonal]
+    · intro i
+      rw [diagonal_apply_eq]
+      apply PosSemidef.eigenvalues_nonneg
+      exact h_psd
   · intro h0; rw [h0, LinearMap.zero_apply]
 
 
