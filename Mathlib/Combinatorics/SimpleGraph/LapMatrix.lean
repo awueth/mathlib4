@@ -276,7 +276,7 @@ of the kernel and show that it has size equal to the number of connected compone
 
 Given a connected component, return the vector which is one on all vertices of the component
 and zero elsewhere-/
-def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
+def lapMatrix_ker_basis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
   ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, by
   rw [LinearMap.mem_ker, ker_reachable_eq]
   intro i j h
@@ -294,12 +294,12 @@ def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (
   ⟩
 
 lemma myBasis_linearIndependent :
-  LinearIndependent ℝ (myBasis G) := by
+  LinearIndependent ℝ (lapMatrix_ker_basis G) := by
   rw [Fintype.linearIndependent_iff]
   intro g h0
   rw [Subtype.ext_iff] at h0
-  have h : ∑ c : ConnectedComponent G, g c • myBasis G c = fun i ↦ g (connectedComponentMk G i)
-  · unfold myBasis
+  have h : ∑ c : ConnectedComponent G, g c • lapMatrix_ker_basis G c = fun i ↦ g (connectedComponentMk G i)
+  · unfold lapMatrix_ker_basis
     simp
     conv => lhs; simp;
     have hs : ∀ c,  g c • (fun i ↦ if connectedComponentMk G i = c then (1 : ℝ) else 0) = fun i ↦ if connectedComponentMk G i = c then g c else 0
@@ -321,7 +321,7 @@ lemma myBasis_linearIndependent :
 
 
 lemma myBasis_spanning :
-  ⊤ ≤ Submodule.span ℝ (Set.range (myBasis G)) := by
+  ⊤ ≤ Submodule.span ℝ (Set.range (lapMatrix_ker_basis G)) := by
   intro x _
   rw [mem_span_range_iff_exists_fun]
   have h : ∀ (i j : V) (w : SimpleGraph.Walk G i j), SimpleGraph.Walk.IsPath w → x.val i = x.val j
@@ -337,7 +337,7 @@ lemma myBasis_spanning :
   ext j
   simp only [AddSubmonoid.coe_finset_sum, Submodule.coe_toAddSubmonoid, SetLike.val_smul,
     Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-  unfold myBasis
+  unfold lapMatrix_ker_basis
   simp only [mul_ite, mul_one, mul_zero, sum_ite_eq, mem_univ, ConnectedComponent.lift_mk, ite_true]
 
 theorem rank_ker_lapMatrix_eq_card_ConnectedComponent : Fintype.card G.ConnectedComponent =
