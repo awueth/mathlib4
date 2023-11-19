@@ -1,3 +1,8 @@
+/-
+Copyright (c) 2023 Adrian Wüthrich. All rights reserved.
+Released under Apache 2.0 license as described in the file LICENSE.
+Authors: Adrian Wüthrich
+-/
 import Mathlib.Combinatorics.SimpleGraph.Basic
 import Mathlib.Combinatorics.SimpleGraph.DegreeSum
 import Mathlib.Combinatorics.SimpleGraph.Connectivity
@@ -13,12 +18,25 @@ import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Finrank
 import Mathlib.LinearAlgebra.Matrix.PosDef
 import Mathlib.LinearAlgebra.Matrix.IsDiag
-import aesop
+
+/-!
+# Laplacian Matrix
+
+In this file we introduce `foo` and `bar`,
+two main concepts in the theory of xyzzyology.
+
+## Main results
+
+- `exists_foo`: the main existence theorem of `foo`s.
+- `bar_of_foo`: a construction of a `bar`, given a `foo`.
+- `bar_eq`    : the main classification theorem of `bar`s.
+
+-/
+
 
 open BigOperators Finset Matrix SimpleGraph
 
 variable {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj] [DecidableEq G.ConnectedComponent]
-
 
 def SimpleGraph.degMatrix (R : Type*) [Ring R] : Matrix V V R := Matrix.diagonal (G.degree ·)
 
@@ -33,8 +51,7 @@ theorem transpose_lapMatrix (R : Type*) [Ring R] : (G.lapMatrix R)ᵀ = G.lapMat
 theorem isSymm_lapMatrix (R : Type*) [Ring R] : (G.lapMatrix R).IsSymm :=
   transpose_lapMatrix G R
 
--- The vector (1,...,1) is in the kernel of the laplacian
-theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) = 0 := by
+theorem lapMatrix_mulVec_const_eq_zero : mulVec (G.lapMatrix ℤ) (Function.const V 1) = 0 := by
   unfold lapMatrix
   rw [sub_mulVec]
   ext; simp;
@@ -61,32 +78,17 @@ lemma sum_adj_eq_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j t
   rw [h]
   simp [degree]
 
-lemma ite_sub_distr (P : Prop) [Decidable P] (a b : ℝ) :
+lemma ite_sub_distr {α : Type u_1} [NonAssocRing α] (P : Prop) [Decidable P] (a b : α) :
   ((if P then a else 0) - if P then b else 0) = if P then a - b else 0 := by
   split
   · rfl
   · rw [sub_self]
 
-lemma ite_add_distr (P : Prop) [Decidable P] (a b : ℝ) :
+lemma ite_add_distr {α : Type u_1} [NonAssocRing α](P : Prop) [Decidable P] (a b : α) :
   ((if P then a else 0) + if P then b else 0) = if P then a + b else 0 := by
   split
   · rfl
   · rw [add_zero]
-
-lemma stubid_lemma (x : V → ℝ) (i j : V) : (if Adj G i j then x j * x j - x j * x i else 0)
-  = (if Adj G j i then x j * x j - x j * x i else 0) := by
-  simp [adj_comm]
-
-lemma switcheroo (x : V → ℝ) : (∑ i : V, ∑ j : V, if Adj G i j then x i * x i - x i * x j else 0)
-  = (∑ i : V, ∑ j : V, if Adj G i j then x j * x j - x j * x i else 0) := by
-  conv =>
-    rhs
-    arg 2
-    intro i
-    arg 2
-    intro j
-    rw [stubid_lemma]
-  rw [Finset.sum_comm]
 
 theorem vec_lapMatrix_vec (x : V → ℝ) :
   toLinearMap₂' (G.lapMatrix ℝ) x x = (∑ i : V, ∑ j : V, if G.Adj i j then (x i - x j)^2 else 0) / 2 := by
@@ -97,7 +99,13 @@ theorem vec_lapMatrix_vec (x : V → ℝ) :
   rw [vec_degMatrix_vec, vec_adjMatrix_vec, ← sum_sub_distrib]
   simp only [sum_adj_eq_degree, sum_mul, ← sum_sub_distrib, ite_mul, one_mul, zero_mul, ite_sub_distr]
   rw [← half_add_self (∑ x_1 : V, ∑ x_2 : V, if Adj G x_1 x_2 then x x_1 * x x_1 - x x_1 * x x_2 else 0)]
-  conv => lhs; arg 1; arg 2; rw [switcheroo]
+  have h : (∑ i : V, ∑ j : V, if Adj G i j then x i * x i - x i * x j else 0) =
+           (∑ i : V, ∑ j : V, if Adj G i j then x j * x j - x j * x i else 0)
+  · have h' (i j : V) : (if Adj G i j then x j * x j - x j * x i else 0) =
+                        (if Adj G j i then x j * x j - x j * x i else 0) := by simp [adj_comm]
+    conv => rhs; arg 2; intro i; arg 2; intro j; rw [h']
+    rw [Finset.sum_comm]
+  conv => lhs; arg 1; arg 2; rw [h]
   simp [← sum_add_distrib]
   conv => lhs; arg 1; arg 2; intro i; arg 2; intro j; rw [ite_add_distr]
   field_simp
@@ -112,8 +120,6 @@ theorem vec_lapMatrix_vec (x : V → ℝ) :
   ring
   rfl
 
-
-@[simp]
 theorem isPosSemidef_lapMatrix : (G.lapMatrix ℝ).PosSemidef := by
   unfold PosSemidef
   constructor
@@ -133,10 +139,42 @@ theorem isPosSemidef_lapMatrix : (G.lapMatrix ℝ).PosSemidef := by
       · exact zero_le_two
     · rw [zero_div]
 
+noncomputable def sqrt_diag_matrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
+  Matrix.diagonal (λ i ↦ Real.sqrt (Matrix.diag A i))
 
+lemma sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : V, 0 ≤ A i i) :
+  (sqrt_diag_matrix A).transpose * sqrt_diag_matrix A = A := by
+  ext i j
+  simp only [sqrt_diag_matrix, diag_apply, diagonal_transpose, mul_apply, ne_eq, diagonal_apply,
+    mul_ite, ite_mul, zero_mul, mul_zero, sum_ite_eq', mem_univ, ite_true]
+  split_ifs with hij
+  · rw [hij, Real.mul_self_sqrt]
+    exact h' j
+  · rw [← h]
+    exact hij
 
-/-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
-are adjacent, then x i = x j-/
+theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (x : V → ℝ) :
+  Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
+  apply Iff.intro
+  · simp only [LinearMap.ext_iff, toLinearMap₂'_apply']
+    conv => rhs; intro y; rw [← h_psd.1, conjTranspose_eq_transpose_of_trivial,
+                              mulVec_transpose, dotProduct_comm, ←dotProduct_mulVec];
+    simp only [Matrix.IsHermitian.spectral_theorem' h_psd.1, IsROrC.ofReal_real_eq_id, Function.comp.left_id]
+    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_psd.1)),
+        ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_psd.1,
+        conjTranspose_eq_transpose_of_trivial, mul_assoc, mul_assoc, ←mul_assoc, ← Matrix.mulVec_mulVec]
+    · intro h0 y
+      rw [dotProduct_mulVec, ← mulVec_transpose] at h0
+      simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
+      rw [h0]
+      simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
+    · simp only [isDiag_diagonal]
+    · intro i
+      rw [diagonal_apply_eq]
+      apply PosSemidef.eigenvalues_nonneg
+      exact h_psd
+  · intro h0; rw [h0, LinearMap.zero_apply]
+
 lemma ker_adj_eq2 (x : V → ℝ) :
   Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
   apply Iff.intro
@@ -196,8 +234,10 @@ lemma ker_adj_eq2 (x : V → ℝ) :
       forall_true_left]
     exact h
 
-/-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
-are reachable, then x i = x j-/
+theorem ker_adj_eq (x : V → ℝ) :
+  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
+  rw [← spd_matrix_zero (G.lapMatrix ℝ) (isPosSemidef_lapMatrix G), ker_adj_eq2]
+
 lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0 ↔
   ∀ i j : V, G.Reachable i j → x i = x j := by
   rw [ker_adj_eq2]
@@ -219,64 +259,12 @@ lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
     simp [hR] at h
     exact h
 
-
-
-
-
-noncomputable def sqrt_diag_matrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
-  Matrix.diagonal (λ i ↦ Real.sqrt (Matrix.diag A i))
-
-lemma sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : V, 0 ≤ A i i) :
-  (sqrt_diag_matrix A).transpose * sqrt_diag_matrix A = A := by
-  ext i j
-  simp only [sqrt_diag_matrix, diag_apply, diagonal_transpose, mul_apply, ne_eq, diagonal_apply,
-    mul_ite, ite_mul, zero_mul, mul_zero, sum_ite_eq', mem_univ, ite_true]
-  split_ifs with hij
-  · rw [hij, Real.mul_self_sqrt]
-    exact h' j
-  · rw [← h]
-    exact hij
-
-
-theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (x : V → ℝ) :
-  Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
-  apply Iff.intro
-  · simp only [LinearMap.ext_iff, toLinearMap₂'_apply']
-    conv => rhs; intro y; rw [← h_psd.1, conjTranspose_eq_transpose_of_trivial,
-                              mulVec_transpose, dotProduct_comm, ←dotProduct_mulVec];
-    simp only [Matrix.IsHermitian.spectral_theorem' h_psd.1, IsROrC.ofReal_real_eq_id, Function.comp.left_id]
-    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_psd.1)),
-        ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_psd.1,
-        conjTranspose_eq_transpose_of_trivial, mul_assoc, mul_assoc, ←mul_assoc, ← Matrix.mulVec_mulVec]
-    · intro h0 y
-      rw [dotProduct_mulVec, ← mulVec_transpose] at h0
-      simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
-      rw [h0]
-      simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
-    · simp only [isDiag_diagonal]
-    · intro i
-      rw [diagonal_apply_eq]
-      apply PosSemidef.eigenvalues_nonneg
-      exact h_psd
-  · intro h0; rw [h0, LinearMap.zero_apply]
-
-
-/-Essentially the same as above-/
-theorem ker_adj_eq (x : V → ℝ) :
-  Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
-  rw [← spd_matrix_zero (G.lapMatrix ℝ) (isPosSemidef_lapMatrix G), ker_adj_eq2]
-
 theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔
   ∀ i j : V, G.Reachable i j → x i = x j := by
   rw [← spd_matrix_zero (G.lapMatrix ℝ) (isPosSemidef_lapMatrix G), ker_reachable_eq2]
 
-
-/-We now have that functions in the kernel of L are constant on connected components. Find a basis
-of the kernel and show that it has size equal to the number of connected components
-
-Given a connected component, return the vector which is one on all vertices of the component
-and zero elsewhere-/
-def lapMatrix_ker_basis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
+def lapMatrix_ker_basis_aux (c : G.ConnectedComponent) :
+  LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ)) :=
   ⟨fun i ↦ if G.connectedComponentMk i = c then 1 else 0, by
   rw [LinearMap.mem_ker, ker_reachable_eq]
   intro i j h
@@ -293,13 +281,13 @@ def lapMatrix_ker_basis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLin
   · rfl
   ⟩
 
-lemma myBasis_linearIndependent :
-  LinearIndependent ℝ (lapMatrix_ker_basis G) := by
+lemma lapMatrix_ker_basis_aux_linearIndependent :
+  LinearIndependent ℝ (lapMatrix_ker_basis_aux G) := by
   rw [Fintype.linearIndependent_iff]
   intro g h0
   rw [Subtype.ext_iff] at h0
-  have h : ∑ c : ConnectedComponent G, g c • lapMatrix_ker_basis G c = fun i ↦ g (connectedComponentMk G i)
-  · unfold lapMatrix_ker_basis
+  have h : ∑ c : ConnectedComponent G, g c • lapMatrix_ker_basis_aux G c = fun i ↦ g (connectedComponentMk G i)
+  · unfold lapMatrix_ker_basis_aux
     simp
     conv => lhs; simp;
     have hs : ∀ c,  g c • (fun i ↦ if connectedComponentMk G i = c then (1 : ℝ) else 0) = fun i ↦ if connectedComponentMk G i = c then g c else 0
@@ -317,11 +305,8 @@ lemma myBasis_linearIndependent :
   rw [← h']
   apply congrFun h0
 
-
-
-
-lemma myBasis_spanning :
-  ⊤ ≤ Submodule.span ℝ (Set.range (lapMatrix_ker_basis G)) := by
+lemma lapMatrix_ker_basis_aux_spanning :
+  ⊤ ≤ Submodule.span ℝ (Set.range (lapMatrix_ker_basis_aux G)) := by
   intro x _
   rw [mem_span_range_iff_exists_fun]
   have h : ∀ (i j : V) (w : SimpleGraph.Walk G i j), SimpleGraph.Walk.IsPath w → x.val i = x.val j
@@ -337,12 +322,21 @@ lemma myBasis_spanning :
   ext j
   simp only [AddSubmonoid.coe_finset_sum, Submodule.coe_toAddSubmonoid, SetLike.val_smul,
     Finset.sum_apply, Pi.smul_apply, smul_eq_mul]
-  unfold lapMatrix_ker_basis
+  unfold lapMatrix_ker_basis_aux
   simp only [mul_ite, mul_one, mul_zero, sum_ite_eq, mem_univ, ConnectedComponent.lift_mk, ite_true]
+
+noncomputable def lapMatrix_ker_basis :=
+  Basis.mk (lapMatrix_ker_basis_aux_linearIndependent G) (lapMatrix_ker_basis_aux_spanning G)
 
 theorem rank_ker_lapMatrix_eq_card_ConnectedComponent : Fintype.card G.ConnectedComponent =
   FiniteDimensional.finrank ℝ (LinearMap.ker (Matrix.toLinearMap₂' (G.lapMatrix ℝ))) := by
-  rw [FiniteDimensional.finrank_eq_card_basis (Basis.mk (myBasis_linearIndependent G) (myBasis_spanning G))]
+  rw [FiniteDimensional.finrank_eq_card_basis (lapMatrix_ker_basis G)]
+
+
+
+
+
+
 
 
 
