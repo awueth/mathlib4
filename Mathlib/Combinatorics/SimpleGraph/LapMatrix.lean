@@ -12,6 +12,7 @@ import Mathlib.LinearAlgebra.Basic
 import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Finrank
 import Mathlib.LinearAlgebra.Matrix.PosDef
+import Mathlib.LinearAlgebra.Matrix.IsDiag
 import aesop
 
 open BigOperators Finset Matrix SimpleGraph
@@ -203,6 +204,17 @@ lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
 noncomputable def sqrt_diag_matrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
   Matrix.diagonal (λ i ↦ Real.sqrt (Matrix.diag A i))
 
+lemma sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : V, 0 ≤ A i i) :
+  (sqrt_diag_matrix A).transpose * sqrt_diag_matrix A = A := by
+  ext i j
+  simp only [sqrt_diag_matrix, diag_apply, diagonal_transpose, mul_apply, ne_eq, diagonal_apply,
+    mul_ite, ite_mul, zero_mul, mul_zero, sum_ite_eq', mem_univ, ite_true]
+  split_ifs with hij
+  · rw [hij, Real.mul_self_sqrt]
+    exact h' j
+  · rw [← h]
+    exact hij
+
 
 theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_her : IsHermitian A) (x : V → ℝ) :
   Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
@@ -211,15 +223,23 @@ theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_her : IsH
     conv => rhs; intro y; rw [← h_her, conjTranspose_eq_transpose_of_trivial,
                               mulVec_transpose, dotProduct_comm, ←dotProduct_mulVec];
     simp only [Matrix.IsHermitian.spectral_theorem' h_her, IsROrC.ofReal_real_eq_id, Function.comp.left_id]
-    have hd : diagonal (IsHermitian.eigenvalues h_her) = (sqrt_diag_matrix A).transpose * sqrt_diag_matrix A
-    · sorry
-    rw [hd, ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her,
+    rw [← sqrt_diag_matrix_square (diagonal (IsHermitian.eigenvalues h_her)), ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her,
         conjTranspose_eq_transpose_of_trivial, mul_assoc, mul_assoc, ←mul_assoc, ← Matrix.mulVec_mulVec]
+
     intro h0 y
     rw [dotProduct_mulVec, ← mulVec_transpose] at h0
     simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
     rw [h0]
     simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
+
+    simp only [isDiag_diagonal]
+
+    intro i
+    rw [diagonal_apply_eq]
+    apply PosSemidef.eigenvalues_nonneg
+    exact h_psd
+
+
   · intro h0; rw [h0, LinearMap.zero_apply]
 
 
