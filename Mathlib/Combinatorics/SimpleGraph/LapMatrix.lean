@@ -19,10 +19,19 @@ open BigOperators Finset Matrix SimpleGraph
 
 variable {V : Type*} [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj] [DecidableEq G.ConnectedComponent]
 
-def SimpleGraph.degMatrix (R : Type*) [Ring R] : Matrix V V R :=
-  of fun a b ↦ if a = b then (G.degree a : R) else 0
+
+def SimpleGraph.degMatrix (R : Type*) [Ring R] : Matrix V V R := Matrix.diagonal (G.degree ·)
 
 def SimpleGraph.lapMatrix (R : Type*) [Ring R] : Matrix V V R := G.degMatrix R - G.adjMatrix R
+
+@[simp]
+theorem transpose_lapMatrix (R : Type*) [Ring R] : (G.lapMatrix R)ᵀ = G.lapMatrix R := by
+  unfold lapMatrix degMatrix
+  rw [transpose_sub, diagonal_transpose, transpose_adjMatrix]
+
+@[simp]
+theorem isSymm_lapMatrix (R : Type*) [Ring R] : (G.lapMatrix R).IsSymm :=
+  transpose_lapMatrix G R
 
 -- The vector (1,...,1) is in the kernel of the laplacian
 theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) = 0 := by
@@ -32,6 +41,7 @@ theorem lapMatrix_mulVec_const : mulVec (G.lapMatrix ℤ) (Function.const V 1) =
   unfold mulVec dotProduct
   simp only [Pi.one_apply, mul_one]
   unfold degMatrix
+  unfold diagonal
   simp only [of_apply, sum_ite_eq, mem_univ, ite_true, sub_self]
 
 lemma vec_adjMatrix_vec (x : V → ℝ) :
@@ -42,8 +52,8 @@ lemma vec_adjMatrix_vec (x : V → ℝ) :
 
 lemma vec_degMatrix_vec (x : V → ℝ) :
   x ⬝ᵥ mulVec (G.degMatrix ℝ) x = ∑ i : V, G.degree i * x i * x i := by
-  unfold dotProduct mulVec degMatrix dotProduct
-  simp [mul_sum, mul_assoc, mul_comm]
+  unfold dotProduct mulVec degMatrix diagonal dotProduct
+  simp only [of_apply, mul_comm, mul_ite, mul_zero, sum_ite_eq, mem_univ, ite_true]
 
 lemma sum_adj_eq_degree (i : V) : (G.degree i : ℝ) = ∑ j : V, if G.Adj i j then 1 else 0 := by
   have h : (∑ j : V, if G.Adj i j then 1 else 0) = (G.adjMatrix ℝ).mulVec (Function.const V 1) i
@@ -105,6 +115,28 @@ theorem vec_lapMatrix_vec (x : V → ℝ) :
   rw [pow_two]
   ring
   rfl
+
+
+@[simp]
+theorem isPosSemidef_lapMatrix : (G.lapMatrix ℝ).PosSemidef := by
+  unfold PosSemidef
+  constructor
+  · unfold IsHermitian; rw [conjTranspose_eq_transpose_of_trivial, isSymm_lapMatrix]
+  . intro x
+    rw [star_trivial, ← toLinearMap₂'_apply', vec_lapMatrix_vec, sum_div]
+    apply sum_nonneg'
+    intro i
+    rw [sum_div]
+    apply sum_nonneg'
+    intro j
+    split_ifs
+    · apply div_nonneg_iff.mpr
+      left
+      constructor
+      · simp only [Real.rpow_two, sq_nonneg]
+      · exact zero_le_two
+    · rw [zero_div]
+
 
 
 /-Let x be in the kernel of L. For all vertices i,j whe have that if i and j
@@ -216,8 +248,9 @@ lemma sqrt_diag_matrix_square (A : Matrix V V ℝ) (h : IsDiag A) (h' : ∀ i : 
     exact hij
 
 
-theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_her : IsHermitian A) (x : V → ℝ) :
+theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_symm : IsSymm A) (x : V → ℝ) :
   Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
+  have h_her : IsHermitian A := by unfold IsHermitian; rw [conjTranspose_eq_transpose_of_trivial, h_symm]
   apply Iff.intro
   · simp only [LinearMap.ext_iff, toLinearMap₂'_apply']
     conv => rhs; intro y; rw [← h_her, conjTranspose_eq_transpose_of_trivial,
@@ -250,13 +283,17 @@ theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_her : IsH
 theorem ker_adj_eq (x : V → ℝ) :
   Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ ∀ i j : V, G.Adj i j → x i = x j := by
   have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
-  · sorry
+  · rw [spd_matrix_zero]
+    · simp only [isPosSemidef_lapMatrix]
+    · simp only [isSymm_lapMatrix]
   · simp only [h, ker_adj_eq2]
 
 theorem ker_reachable_eq (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔
   ∀ i j : V, G.Reachable i j → x i = x j := by
   have h : Matrix.toLinearMap₂' (G.lapMatrix ℝ) x = 0 ↔ Matrix.toLinearMap₂' (G.lapMatrix ℝ) x x = 0
-  · sorry
+  · rw [spd_matrix_zero]
+    · simp only [isPosSemidef_lapMatrix]
+    · simp only [isSymm_lapMatrix]
   · simp only [h, ker_reachable_eq2]
 
 
