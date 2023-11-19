@@ -11,6 +11,7 @@ import Mathlib.Data.Real.Basic
 import Mathlib.LinearAlgebra.Basic
 import Mathlib.LinearAlgebra.Matrix.BilinearForm
 import Mathlib.LinearAlgebra.Finrank
+import Mathlib.LinearAlgebra.Matrix.PosDef
 import aesop
 
 open BigOperators Finset Matrix SimpleGraph
@@ -138,7 +139,7 @@ lemma ker_adj_eq2 (x : V → ℝ) :
         left
         constructor
         · split
-          · exact sq_nonneg (x i - x j)
+          · simp only [Real.rpow_two, sq_nonneg]
           · rfl
         · exact zero_le_two
       · simp only [mem_univ, true_and]
@@ -148,7 +149,8 @@ lemma ker_adj_eq2 (x : V → ℝ) :
         apply div_pos_iff.mpr
         left
         constructor
-        · apply sq_pos_of_ne_zero
+        · rw [Real.rpow_two]
+          apply sq_pos_of_ne_zero
           rw [sub_ne_zero]
           exact hn.2
         · exact zero_lt_two
@@ -166,7 +168,8 @@ lemma ker_adj_eq2 (x : V → ℝ) :
     apply sum_eq_zero
     intro j
     specialize h i j
-    simp only [mem_univ, ite_eq_right_iff, zero_lt_two, pow_eq_zero_iff, forall_true_left, sub_eq_zero]
+    simp only [mem_univ, Real.rpow_two, ite_eq_right_iff, zero_lt_two, pow_eq_zero_iff, sub_eq_zero,
+      forall_true_left]
     exact h
   }
 
@@ -192,6 +195,62 @@ lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
     · simp only [Adj.reachable hA]
     simp [hR] at h
     exact h
+
+
+
+
+
+
+example (A D : Matrix V V ℝ) (x : V → ℝ) : x ⬝ᵥ mulVec (A * Dᵀ) (mulVec (D * Aᵀ) x) = (mulVec (A * Dᵀ)ᵀ x) ⬝ᵥ (mulVec (D * Aᵀ) x) := by
+  rw [dotProduct_mulVec]
+  rw [← mulVec_transpose]
+
+
+example (A : Matrix V V ℝ) (x : V → ℝ) : vecMul x A = mulVec Aᵀ x := by
+  rw [mulVec_transpose]
+
+
+
+
+noncomputable def sqrt_diag_matrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
+  Matrix.diagonal (λ i ↦ Real.sqrt (Matrix.diag A i))
+
+
+theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_her : IsHermitian A) (x : V → ℝ) :
+  Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
+  apply Iff.intro
+  · intro h0
+    rw [toLinearMap₂'_apply'] at h0
+    rw [Matrix.IsHermitian.spectral_theorem' h_her] at h0
+    simp only [IsROrC.ofReal_real_eq_id, Function.comp.left_id] at h0
+    have hd : diagonal (IsHermitian.eigenvalues h_her) = (sqrt_diag_matrix A).transpose * sqrt_diag_matrix A
+    · sorry
+    rw [hd] at h0
+    conv at h0 =>
+      lhs
+      arg 2
+      rw [← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her, conjTranspose_eq_transpose_of_trivial]
+      rw [mul_assoc, mul_assoc, ←mul_assoc]
+      rw [← Matrix.mulVec_mulVec]
+    rw [dotProduct_mulVec, ← mulVec_transpose] at h0
+    simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
+    ------------------------------------------------------------------------------------------------
+    rw [LinearMap.ext_iff]
+    intro y;
+    have h_symm : toLinearMap₂' A x y = toLinearMap₂' A y x := by sorry
+    rw [h_symm]
+    rw [toLinearMap₂'_apply']
+    rw [Matrix.IsHermitian.spectral_theorem' h_her]
+    simp only [IsROrC.ofReal_real_eq_id, Function.comp.left_id]
+    rw [hd]
+    rw [← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her, conjTranspose_eq_transpose_of_trivial]
+    rw [mul_assoc, mul_assoc, ←mul_assoc]
+    rw [← Matrix.mulVec_mulVec]
+    rw [h0]
+    simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
+  · intro h0; rw [h0, LinearMap.zero_apply]
+
+
 
 
 
@@ -230,10 +289,6 @@ def myBasis (c : G.ConnectedComponent) : LinearMap.ker (Matrix.toLinearMap₂' (
     rw [← h₃, h]
   · rfl
   ⟩
-
-variable (c0 : G.ConnectedComponent)
-#check (myBasis G c0).val
-
 
 lemma myBasis_linearIndependent :
   LinearIndependent ℝ (myBasis G) := by
