@@ -200,18 +200,6 @@ lemma ker_reachable_eq2 (x : V → ℝ) : Matrix.toLinearMap₂' (G.lapMatrix �
 
 
 
-
-example (A D : Matrix V V ℝ) (x : V → ℝ) : x ⬝ᵥ mulVec (A * Dᵀ) (mulVec (D * Aᵀ) x) = (mulVec (A * Dᵀ)ᵀ x) ⬝ᵥ (mulVec (D * Aᵀ) x) := by
-  rw [dotProduct_mulVec]
-  rw [← mulVec_transpose]
-
-
-example (A : Matrix V V ℝ) (x : V → ℝ) : vecMul x A = mulVec Aᵀ x := by
-  rw [mulVec_transpose]
-
-
-
-
 noncomputable def sqrt_diag_matrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
   Matrix.diagonal (λ i ↦ Real.sqrt (Matrix.diag A i))
 
@@ -219,33 +207,17 @@ noncomputable def sqrt_diag_matrix (A : Matrix V V ℝ) : Matrix V V ℝ :=
 theorem spd_matrix_zero (A : Matrix V V ℝ) (h_psd : PosSemidef A) (h_her : IsHermitian A) (x : V → ℝ) :
   Matrix.toLinearMap₂' A x x = 0 ↔ Matrix.toLinearMap₂' A x = 0 := by
   apply Iff.intro
-  · intro h0
-    rw [toLinearMap₂'_apply'] at h0
-    rw [Matrix.IsHermitian.spectral_theorem' h_her] at h0
-    simp only [IsROrC.ofReal_real_eq_id, Function.comp.left_id] at h0
+  · simp only [LinearMap.ext_iff, toLinearMap₂'_apply']
+    conv => rhs; intro y; rw [← h_her, conjTranspose_eq_transpose_of_trivial,
+                              mulVec_transpose, dotProduct_comm, ←dotProduct_mulVec];
+    simp only [Matrix.IsHermitian.spectral_theorem' h_her, IsROrC.ofReal_real_eq_id, Function.comp.left_id]
     have hd : diagonal (IsHermitian.eigenvalues h_her) = (sqrt_diag_matrix A).transpose * sqrt_diag_matrix A
     · sorry
-    rw [hd] at h0
-    conv at h0 =>
-      lhs
-      arg 2
-      rw [← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her, conjTranspose_eq_transpose_of_trivial]
-      rw [mul_assoc, mul_assoc, ←mul_assoc]
-      rw [← Matrix.mulVec_mulVec]
+    rw [hd, ← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her,
+        conjTranspose_eq_transpose_of_trivial, mul_assoc, mul_assoc, ←mul_assoc, ← Matrix.mulVec_mulVec]
+    intro h0 y
     rw [dotProduct_mulVec, ← mulVec_transpose] at h0
     simp only [transpose_mul, transpose_transpose, dotProduct_self_eq_zero] at h0
-    ------------------------------------------------------------------------------------------------
-    rw [LinearMap.ext_iff]
-    intro y;
-    have h_symm : toLinearMap₂' A x y = toLinearMap₂' A y x := by sorry
-    rw [h_symm]
-    rw [toLinearMap₂'_apply']
-    rw [Matrix.IsHermitian.spectral_theorem' h_her]
-    simp only [IsROrC.ofReal_real_eq_id, Function.comp.left_id]
-    rw [hd]
-    rw [← Matrix.IsHermitian.conjTranspose_eigenvectorMatrix h_her, conjTranspose_eq_transpose_of_trivial]
-    rw [mul_assoc, mul_assoc, ←mul_assoc]
-    rw [← Matrix.mulVec_mulVec]
     rw [h0]
     simp only [mulVec_zero, dotProduct_zero, LinearMap.zero_apply]
   · intro h0; rw [h0, LinearMap.zero_apply]
