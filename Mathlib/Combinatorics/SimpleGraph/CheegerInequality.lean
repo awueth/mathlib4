@@ -58,7 +58,10 @@ theorem qwertz : spectral_gap G = sInf (ContinuousLinearMap.rayleighQuotient (La
 theorem gap_leq_rayleigh (s : Finset V) (hs : conductance ℝ G s = min_conductance G) :
   spectral_gap G ≤ ContinuousLinearMap.rayleighQuotient (LapMatrixCLM G) (my_vector G s) := by
   rw [qwertz]
-  sorry
+  apply csInf_le
+  · sorry
+  · apply Set.mem_image_of_mem
+    sorry
 
 -- R(g) ≤ 2 * h
 theorem rayleigh_leq_my_vec (s : Finset V) (hs : conductance ℝ G s = min_conductance G) :
