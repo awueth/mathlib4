@@ -16,7 +16,7 @@ This module defines the Laplacian matrix of a graph, and proves some of its elem
 * `SimpleGraph.degMatrix`: The degree matrix of a simple graph
 * `SimpleGraph.lapMatrix`: The Laplacian matrix of a simple graph, defined as the difference
   between the degree matrix and the adjacency matrix.
-* `isPosSemidef_lapMatrix`: The Laplacian matrix is positive semidefinite.
+* `PosSemidef_lapMatrix`: The Laplacian matrix is positive semidefinite.
 * `rank_ker_lapMatrix_eq_card_ConnectedComponent`: The number of connected components in `G` is
   the dimension of the nullspace of its Laplacian matrix.
 
@@ -31,11 +31,14 @@ variable {V : Type*} (α : Type*)
 variable [Fintype V] [DecidableEq V] (G : SimpleGraph V) [DecidableRel G.Adj]
 
 /-- The diagonal matrix consisting of the degrees of the vertices in the graph. -/
-def degMatrix [AddMonoidWithOne α] : Matrix V V α := Matrix.diagonal (G.degree ·)
+def degMatrix [AddMonoidWithOne α] : Matrix V V α := diagonal (G.degree ·)
 
 /-- `lapMatrix G R` is the matrix `L = D - A` where `D`is the degree
 and `A` the adjacency matrix of `G`. -/
 def lapMatrix [AddGroupWithOne α] : Matrix V V α := G.degMatrix α - G.adjMatrix α
+
+noncomputable def normalizedLapMatrix : Matrix V V ℝ :=
+  diagonal (Real.sqrt ∘ (G.degree ·))⁻¹ * (G.lapMatrix ℝ) * diagonal (Real.sqrt ∘ (G.degree ·))⁻¹
 
 variable {α}
 
@@ -69,7 +72,7 @@ theorem degree_eq_sum_if_adj [AddCommMonoidWithOne α] (i : V) :
   unfold degree neighborFinset neighborSet
   rw [sum_boole, Set.toFinset_setOf]
 
-/-- Let $L$ be the graph Laplacian and let $x \in \mathbb{R}$, then
+/-- Let $L$ be the graph Laplacian and let $x \in \mathbb{R}^{n}$, then
 $$x^{\top} L x = \sum_{i \sim j} (x_{i}-x_{j})^{2}$$,
 where $\sim$ denotes the adjacency relation -/
 theorem lapMatrix_toLinearMap₂' [Field α] [CharZero α] (x : V → α) :
