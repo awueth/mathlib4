@@ -3,7 +3,7 @@ import Mathlib.LinearAlgebra.Matrix.Symmetric
 
 open Matrix
 
-variable {E : Type*} [Fintype E] --[DecidableEq E] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
+variable {E : Type*} [Fintype E] [DecidableEq E] [NormedAddCommGroup E] [InnerProductSpace ℝ E]
 
 variable [FiniteDimensional ℝ E]
 

@@ -4,6 +4,7 @@ import Mathlib.Algebra.Function.Indicator
 import Mathlib.Analysis.NormedSpace.Star.Matrix
 import Mathlib.Data.Fin.Tuple.Sort
 import Mathlib.Analysis.InnerProductSpace.CourantFischer
+import Mathlib.Data.FinEnum
 
 
 open BigOperators Finset Matrix
@@ -44,7 +45,7 @@ variable [LinearOrder (Module.End.Eigenvalues (toLin' (SimpleGraph.lapMatrix ℝ
 
 noncomputable def spectral_gap := (pos_eigenvalues G).min' sorry
 
-noncomputable def my_vector (s : Finset V): V → ℝ := (Set.indicator s 1) - (fun _ => (volume G s : ℝ)/(volume G univ))
+noncomputable def my_vector (s : Finset V) : WithLp 2 (V → ℝ) := (Set.indicator s 1) - (fun _ => (volume G s : ℝ)/(volume G univ))
 
 noncomputable def LapMatrixCLM := (Matrix.toEuclideanCLM (𝕜 := ℝ) (G.lapMatrix ℝ))
 
@@ -59,13 +60,18 @@ theorem gap_leq_rayleigh (s : Finset V) (hs : conductance ℝ G s = min_conducta
   spectral_gap G ≤ ContinuousLinearMap.rayleighQuotient (LapMatrixCLM G) (my_vector G s) := by
   rw [qwertz]
   apply csInf_le
-  · sorry
+  · simp [BddBelow, Set.nonempty_def]
+    use 0 -- 0 is a lower bound of the rayleigh quotient. Theorem for PSD?
+    sorry
   · apply Set.mem_image_of_mem
+    simp [my_submodule, Submodule.mem_orthogonal_singleton_iff_inner_right]
     sorry
 
 -- R(g) ≤ 2 * h
 theorem rayleigh_leq_my_vec (s : Finset V) (hs : conductance ℝ G s = min_conductance G) :
-  ContinuousLinearMap.rayleighQuotient (LapMatrixCLM G) (my_vector G s) ≤ 2 * (min_conductance G) := sorry
+  ContinuousLinearMap.rayleighQuotient (LapMatrixCLM G) (my_vector G s) ≤ 2 * (min_conductance G) := by
+  simp [ContinuousLinearMap.rayleighQuotient, ContinuousLinearMap.reApplyInnerSelf]
+  sorry
 
 theorem cheeger_ineq_easy : spectral_gap G ≤ 2 * (min_conductance G) := by
   obtain ⟨s, _, h⟩ := Finset.exists_mem_eq_inf' universe_powerSet_nonempty (conductance ℝ G)
@@ -81,9 +87,16 @@ variable {n : ℕ} (hn : FiniteDimensional.finrank ℝ (V → ℝ) = n)
 
 #check symm_matrix_eigenvalues_sorted hn (G.lapMatrix ℝ) (G.isSymm_lapMatrix)
 
+#check {x : ℕ | x < n}
 
-#check (ℝ ∙ ((WithLp.equiv 2 _).symm <| ((Real.sqrt ∘ (G.degree ·)) * (fun _ ↦ 1 : V → ℝ))))ᗮ
+-- Sᵢ = {v₁,...,vᵢ}, how to order vertices? Define a function that does it?
 
-#check ((WithLp.equiv 2 _).symm <| ((Real.sqrt ∘ (G.degree ·)) * (fun _ ↦ 1 : V → ℝ)))
+variable [FinEnum V] (g : V → ℝ)
 
-#check {x : (my_submodule G) | x ≠ 0}
+--instance : FinEnum (Type u_1) := sorry
+
+#check (g ∘ (@FinEnum.equiv V).invFun) ∘ Tuple.sort (g ∘ (@FinEnum.equiv V).invFun)
+
+
+#check (fun i : Fin n => g ((FinEnum.toList V)[i]'sorry)) ∘
+  Tuple.sort (fun i : Fin n => g ((FinEnum.toList V)[i]'sorry))
