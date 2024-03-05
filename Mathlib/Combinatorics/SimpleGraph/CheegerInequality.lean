@@ -78,8 +78,6 @@ theorem cheeger_ineq_easy : spectral_gap G ≤ 2 * (min_conductance G) := by
   rw [← min_conductance] at h
   apply LE.le.trans (gap_leq_rayleigh G s (Eq.symm h)) (rayleigh_leq_my_vec G s (Eq.symm h))
 
-theorem cheeger_ineq_hard : min_conductance G^2 / 2 ≤ spectral_gap G := sorry
-
 
 
 
@@ -91,12 +89,45 @@ variable {n : ℕ} (hn : FiniteDimensional.finrank ℝ (V → ℝ) = n)
 
 -- Sᵢ = {v₁,...,vᵢ}, how to order vertices? Define a function that does it?
 
-variable [FinEnum V] (g : V → ℝ)
+variable [FinEnum V]
 
---instance : FinEnum (Type u_1) := sorry
+def vertex_tuple : Fin (FinEnum.card V) → V := (@FinEnum.equiv V).invFun
 
-#check (g ∘ (@FinEnum.equiv V).invFun) ∘ Tuple.sort (g ∘ (@FinEnum.equiv V).invFun)
+noncomputable def vertex_tuple_sorted (f : V → ℝ) : Fin (FinEnum.card V) → V :=
+  vertex_tuple ∘ Tuple.sort (f ∘ vertex_tuple)
 
+noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
+  ((vertex_tuple_sorted f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
 
-#check (fun i : Fin n => g ((FinEnum.toList V)[i]'sorry)) ∘
-  Tuple.sort (fun i : Fin n => g ((FinEnum.toList V)[i]'sorry))
+noncomputable def min_sweep_conductance (f : V → ℝ) :=
+  {sweep f i | i : Fin (FinEnum.card V)}.toFinset.inf' (sorry) (conductance ℝ G)
+
+-- h_G ≤ α_G
+theorem my_ineq1 (f : V → ℝ) : min_conductance G ≤ (min_sweep_conductance G f) := by
+  simp [min_conductance, min_sweep_conductance]
+  intro b hb
+  sorry
+
+-- α² / 2 ≤ λ
+theorem my_ineq2 (f : V → ℝ)
+  (hf : Module.End.HasEigenvector (Matrix.toLin' (G.lapMatrix ℝ)) (spectral_gap G) f) :
+  (min_sweep_conductance G f)^2 / 2 ≤ spectral_gap G := sorry
+
+-- get eigenvector achieving spectral gap
+
+theorem is_eigenvalue :
+    Module.End.HasEigenvalue (Matrix.toLin' (G.lapMatrix ℝ)) (spectral_gap G) := by
+  sorry
+
+-- h_G² / 2 ≤ α² / 2 ≤ λ
+theorem cheeger_ineq_hard : min_conductance G^2 / 2 ≤ spectral_gap G := by
+  obtain ⟨f, hf⟩ := Module.End.HasEigenvalue.exists_hasEigenvector (is_eigenvalue G)
+  have h : min_conductance G^2 / 2 ≤ (min_sweep_conductance G f)^2 / 2 := by
+    ring_nf
+    simp
+    apply sq_le_sq'
+    · sorry
+    · apply my_ineq1 G f
+  calc
+    min_conductance G^2 / 2 ≤ (min_sweep_conductance G f)^2 / 2 := h
+    (min_sweep_conductance G f)^2 / 2 ≤ spectral_gap G := by exact my_ineq2 G f hf
