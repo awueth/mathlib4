@@ -37,7 +37,7 @@ def degMatrix [AddMonoidWithOne α] : Matrix V V α := diagonal (G.degree ·)
 and `A` the adjacency matrix of `G`. -/
 def lapMatrix [AddGroupWithOne α] : Matrix V V α := G.degMatrix α - G.adjMatrix α
 
-noncomputable def normalizedLapMatrix : Matrix V V ℝ :=
+noncomputable def normalLapMatrix : Matrix V V ℝ :=
   diagonal (Real.sqrt ∘ (G.degree ·))⁻¹ * (G.lapMatrix ℝ) * diagonal (Real.sqrt ∘ (G.degree ·))⁻¹
 
 variable {α}
@@ -47,6 +47,11 @@ theorem isSymm_degMatrix [AddMonoidWithOne α] : (G.degMatrix α).IsSymm :=
 
 theorem isSymm_lapMatrix [AddGroupWithOne α] : (G.lapMatrix α).IsSymm :=
   (isSymm_degMatrix _).sub (isSymm_adjMatrix _)
+
+theorem isSymm_normalLapMatrix : (G.normalLapMatrix).IsSymm := by
+  rw [Matrix.IsSymm, normalLapMatrix, transpose_mul, diagonal_transpose]
+  conv_lhs => rw [← G.isSymm_lapMatrix]
+  rw [transpose_mul, transpose_transpose, diagonal_transpose, Matrix.mul_assoc]
 
 theorem degMatrix_mulVec_apply [NonAssocSemiring α] (v : V) (vec : V → α) :
     (G.degMatrix α).mulVec vec v = G.degree v * vec v := by
