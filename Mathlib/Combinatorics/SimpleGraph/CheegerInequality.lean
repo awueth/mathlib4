@@ -125,15 +125,15 @@ noncomputable def min_sweep_conductance (f : V → ℝ) :=
 /- h_G ≤ α_G -/
 theorem my_ineq1 (f : V → ℝ) : minConductance G ≤ (min_sweep_conductance G f) := by
   simp [minConductance, min_sweep_conductance]
-  intro b hb
-  sorry -- should be easy
+  intro s _
+  use s
 
 /- α² / 2 ≤ λ, long chain of inequalities -/
 theorem my_ineq2 (f : V → ℝ) (hc : G.Connected)
   (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap G hc) f) :
   (min_sweep_conductance G f)^2 / 2 ≤ gap G hc := sorry
 
-/- h_G² / 2 ≤ α² / 2 ≤ λ -/
+/- h_G²/2 ≤ α²/2 ≤ λ -/
 theorem cheeger_ineq_hard (hc : G.Connected) : minConductance G^2 / 2 ≤ gap G hc := by
   obtain ⟨f, hf⟩ := Module.End.HasEigenvalue.exists_hasEigenvector (gap G hc).2
   have h : minConductance G^2 / 2 ≤ (min_sweep_conductance G f)^2 / 2 := by
