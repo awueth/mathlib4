@@ -24,12 +24,12 @@ def edge_boundary_v2 (s : Set V) : Set (SimpleGraph.edgeSet G) := Sym2.mk '' (ed
 
 def cut (s : Finset V) : ℕ := ∑ u in s, ∑ v in sᶜ, (if G.Adj u v then 1 else 0)
 
-noncomputable def conductance (s : Finset V) : ℝ := cut G s / min (volume G s) (volume G sᶜ)
+noncomputable def conductance (s : Finset V) : NNReal := cut G s / min (volume G s) (volume G sᶜ)
 
 theorem universe_powerSet_nonempty : (Finset.powerset (Finset.univ : Finset V)).Nonempty := by
   apply Finset.powerset_nonempty
 
-noncomputable def minConductance : ℝ := (Finset.powerset (Finset.univ : Finset V)).inf'
+noncomputable def minConductance : NNReal := (Finset.powerset (Finset.univ : Finset V)).inf'
   (universe_powerSet_nonempty) (conductance G)
 
 noncomputable def eigenvalues_finset :
@@ -51,12 +51,6 @@ noncomputable def gap (hc : G.Connected) : Module.End.Eigenvalues (Matrix.toLin'
 noncomputable def gap' : ℝ :=
   symm_matrix_eigenvalues_sorted G.normalLapMatrix G.isSymm_normalLapMatrix 1
 
-def this_is_bad : Fin 3 := 7 -- why does this work?
-def this_is_bad': Fin 3 := ⟨7, sorry⟩
-
-#check this_is_bad.isLt
-#check this_is_bad'.isLt
-
 noncomputable def normalLapMatrixCLM := (Matrix.toEuclideanCLM (𝕜 := ℝ) G.normalLapMatrix)
 
 end preliminaries
@@ -67,11 +61,11 @@ section easy_inequality
 
 /- For a set s with minimal conductance, R(g) ≤ 2 h_G -/
 noncomputable def g_low (s : Finset V) : WithLp 2 (V → ℝ) :=
-  (Set.indicator s 1) - (fun _ => (volume G s : ℝ)/(volume G univ))
+  (Set.indicator s 1) - (fun _ => (volume G s : ℝ) / (volume G univ : ℝ))
 
 /- Orthogonal complement of D^(1/2) * 1 -/
 noncomputable def sqrt_deg_perp :=
-  (ℝ ∙ ((WithLp.equiv 2 _).symm <| ((Real.sqrt ∘ (G.degree ·)) * (fun _ ↦ 1 : V → ℝ))))ᗮ
+  (ℝ ∙ ((WithLp.equiv 2 _).symm <| fun v ↦ G.degree v : V → ℝ))ᗮ
 
 /- λ = inf R(g) over g ⟂ D^(1/2) 1. Follows from Courant fischer. Uses the fact λ = λ₁ which
 is true since G is connected. -/
@@ -87,10 +81,26 @@ theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G)
     use 0 -- 0 is a lower bound of the rayleigh quotient. Theorem for definite matrices?
     simp [lowerBounds]
     intro f hf
+    rw [ContinuousLinearMap.rayleighQuotient, ContinuousLinearMap.reApplyInnerSelf, IsROrC.re_to_real]
     sorry
-  · apply Set.mem_image_of_mem
-    simp [sqrt_deg_perp, Submodule.mem_orthogonal_singleton_iff_inner_right]
-    sorry -- g ⟂ D^(1/2) 1
+  · apply Set.mem_image_of_mem -- g ⟂ D^(1/2) 1
+    rw [sqrt_deg_perp, SetLike.mem_coe, Submodule.mem_orthogonal_singleton_iff_inner_right, g_low,
+      inner_sub_right]
+    have h1 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ SimpleGraph.degree G v,
+        Set.indicator (↑s) 1⟫_ℝ = volume G s := by
+      simp [Set.indicator, Set.indicator_apply, volume]
+    have h2 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ SimpleGraph.degree G v,
+        fun x ↦ volume G s / volume G univ⟫_ℝ = volume G s := by
+      simp
+      rw [← Finset.sum_mul]
+      have h3 : (∑ i : V, (SimpleGraph.degree G i : ℝ)) = (volume G univ : ℝ)  := by
+        simp [volume]
+      rw [h3, ← mul_comm_div, div_self, one_mul]
+      sorry -- vol G univ ≠ 0
+
+
+    rw [h1, h2, sub_self]
+
 
 /- R(g) ≤ 2 * h -/
 theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minConductance G) :
@@ -98,7 +108,7 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
   simp [ContinuousLinearMap.rayleighQuotient, ContinuousLinearMap.reApplyInnerSelf]
   sorry
 
-theorem cheeger_ineq_easy (hc : G.Connected) : gap G hc ≤ 2 * (minConductance G) := by
+theorem cheeger_ineq_easy (hc : G.Connected) : gap G hc ≤ 2 * (minConductance G : ℝ) := by
   obtain ⟨s, _, h⟩ := Finset.exists_mem_eq_inf' universe_powerSet_nonempty (conductance G)
   rw [← minConductance] at h
   apply LE.le.trans (gap_le_rayleigh G s (Eq.symm h) hc) (rayleigh_le_minConductance G s (Eq.symm h))
@@ -119,7 +129,7 @@ noncomputable def vertex_tuple_sorted (f : V → ℝ) : Fin (FinEnum.card V) →
 noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
   ((vertex_tuple_sorted f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
 
-noncomputable def min_sweep_conductance (f : V → ℝ) :=
+noncomputable def min_sweep_conductance (f : V → ℝ) : NNReal :=
   {sweep f i | i : Fin (FinEnum.card V)}.toFinset.inf' (sorry) (conductance G)
 
 /- h_G ≤ α_G -/
@@ -131,21 +141,21 @@ theorem my_ineq1 (f : V → ℝ) : minConductance G ≤ (min_sweep_conductance G
 /- α² / 2 ≤ λ, long chain of inequalities -/
 theorem my_ineq2 (f : V → ℝ) (hc : G.Connected)
   (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap G hc) f) :
-  (min_sweep_conductance G f)^2 / 2 ≤ gap G hc := sorry
+  (min_sweep_conductance G f : ℝ)^2 / 2 ≤ gap G hc := sorry
 
 /- h_G²/2 ≤ α²/2 ≤ λ -/
-theorem cheeger_ineq_hard (hc : G.Connected) : minConductance G^2 / 2 ≤ gap G hc := by
+theorem cheeger_ineq_hard (hc : G.Connected) : (minConductance G : ℝ)^2 / 2 ≤ gap G hc := by
   obtain ⟨f, hf⟩ := Module.End.HasEigenvalue.exists_hasEigenvector (gap G hc).2
   have h : minConductance G^2 / 2 ≤ (min_sweep_conductance G f)^2 / 2 := by
-    ring_nf
-    simp
-    apply sq_le_sq'
+    simp [NNReal.le_div_iff_mul_le]
+    rw [← NNReal.coe_le_coe]
+    apply sq_le_sq' -- Theorem for NNReal?
     · apply sub_nonneg.1
       rw [sub_neg_eq_add]
       apply add_nonneg
-      · sorry -- 0 ≤ min_conductance G. Define conductance as NNReal?
-      · sorry -- 0 ≤ min_sweep_conductance G f
+      · simp only [NNReal.val_eq_coe, NNReal.zero_le_coe]
+      · simp only [NNReal.val_eq_coe, NNReal.zero_le_coe]
     · exact my_ineq1 G f
   calc
-    minConductance G^2 / 2 ≤ (min_sweep_conductance G f)^2 / 2 := h
-    (min_sweep_conductance G f)^2 / 2 ≤ gap G hc := by exact my_ineq2 G f hc hf
+    (minConductance G)^2 / 2 ≤ (min_sweep_conductance G f : ℝ)^2 / 2 := h
+    _ ≤ ↑(gap G hc) := by exact my_ineq2 G f hc hf
