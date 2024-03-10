@@ -61,16 +61,35 @@ section easy_inequality
 
 /- For a set s with minimal conductance, R(g) ≤ 2 h_G -/
 noncomputable def g_low (s : Finset V) : WithLp 2 (V → ℝ) :=
-  (Set.indicator s 1) - (fun _ => (volume G s : ℝ) / (volume G univ : ℝ))
+  (WithLp.equiv 2 (V → ℝ)).symm <|
+  (Set.indicator s fun _ => (volume G univ : ℝ)) - (fun _ => (volume G s : ℝ))
+
+/- g_low ⟂ D^(1/2) 1 -/
+theorem g_low_orthogonal (s : Finset V) :
+    ⟪(WithLp.equiv 2 (V → ℝ)).symm <| fun v ↦ G.degree v, g_low G s⟫_ℝ = 0 := by
+  rw [g_low, WithLp.equiv_symm_sub, inner_sub_right]
+  have h1 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ ↑(SimpleGraph.degree G v),
+      (WithLp.equiv 2 (V → ℝ)).symm (Set.indicator ↑s fun _ ↦ ↑(volume G univ))⟫_ℝ =
+      volume G s * (volume G univ) := by
+    simp [Set.indicator, Set.indicator_apply, volume, sum_mul]
+  have h2 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ ↑(SimpleGraph.degree G v),
+      (WithLp.equiv 2 (V → ℝ)).symm fun _ ↦ ↑(volume G s)⟫_ℝ = volume G s * (volume G univ) := by
+    simp
+    rw [← Finset.sum_mul]
+    have h3 : (∑ i : V, (SimpleGraph.degree G i : ℝ)) = (volume G univ : ℝ)  := by
+      simp [volume]
+    rw [h3, mul_comm]
+  rw [h1, h2, sub_self]
 
 /- Orthogonal complement of D^(1/2) * 1 -/
 noncomputable def sqrt_deg_perp :=
-  (ℝ ∙ ((WithLp.equiv 2 _).symm <| fun v ↦ G.degree v : V → ℝ))ᗮ
+  (ℝ ∙ ((WithLp.equiv 2 (V → ℝ)).symm <| fun v ↦ G.degree v))ᗮ
 
 /- λ = inf R(g) over g ⟂ D^(1/2) 1. Follows from Courant fischer. Uses the fact λ = λ₁ which
 is true since G is connected. -/
 theorem gap_eq_inf_rayleigh (hc : G.Connected) :
-  gap G hc  = sInf (ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) '' (sqrt_deg_perp G)) := sorry
+    gap G hc  = sInf (ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) '' (sqrt_deg_perp G)) := by
+  sorry
 
 /- λ ≤ R(g) -/
 theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G) (hc : G.Connected) :
@@ -84,28 +103,29 @@ theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G)
     rw [ContinuousLinearMap.rayleighQuotient, ContinuousLinearMap.reApplyInnerSelf, IsROrC.re_to_real]
     sorry
   · apply Set.mem_image_of_mem -- g ⟂ D^(1/2) 1
-    rw [sqrt_deg_perp, SetLike.mem_coe, Submodule.mem_orthogonal_singleton_iff_inner_right, g_low,
-      inner_sub_right]
-    have h1 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ SimpleGraph.degree G v,
-        Set.indicator (↑s) 1⟫_ℝ = volume G s := by
-      simp [Set.indicator, Set.indicator_apply, volume]
-    have h2 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ SimpleGraph.degree G v,
-        fun x ↦ volume G s / volume G univ⟫_ℝ = volume G s := by
-      simp
-      rw [← Finset.sum_mul]
-      have h3 : (∑ i : V, (SimpleGraph.degree G i : ℝ)) = (volume G univ : ℝ)  := by
-        simp [volume]
-      rw [h3, ← mul_comm_div, div_self, one_mul]
-      sorry -- vol G univ ≠ 0
+    rw [sqrt_deg_perp, SetLike.mem_coe, Submodule.mem_orthogonal_singleton_iff_inner_right, g_low_orthogonal]
 
+theorem reApplyInnerSelf_matrix (A : Matrix V V ℝ) (x : V → ℝ) : ContinuousLinearMap.reApplyInnerSelf
+    (Matrix.toEuclideanCLM (𝕜 := ℝ) A) ((WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm x) = x ⬝ᵥ A *ᵥ x := by
+  simp [ContinuousLinearMap.reApplyInnerSelf, Matrix.toEuclideanCLM_piLp_equiv_symm A x,
+    dotProduct, mul_comm]
 
-    rw [h1, h2, sub_self]
+theorem xLx (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix *ᵥ x = (∑ i : V, ∑ j : V,
+    if G.Adj i j then (x i / Real.sqrt (G.degree i) - x j / Real.sqrt (G.degree j))^2 else 0) / 2 := by
+  rw [SimpleGraph.normalLapMatrix]
+  sorry
+
+theorem gLg (s : Finset V) : ContinuousLinearMap.reApplyInnerSelf (normalLapMatrixCLM G) (g_low G s) =
+    cut G s * (volume G s)^2 := by
+  rw [normalLapMatrixCLM, g_low, reApplyInnerSelf_matrix, xLx]
+  conv_lhs => arg 1; arg 2; intro i; arg 2; intro j;
 
 
 /- R(g) ≤ 2 * h -/
 theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minConductance G) :
   ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) (g_low G s) ≤ 2 * (minConductance G) := by
-  simp [ContinuousLinearMap.rayleighQuotient, ContinuousLinearMap.reApplyInnerSelf]
+  rw [ContinuousLinearMap.rayleighQuotient, normalLapMatrixCLM, g_low, reApplyInnerSelf_matrix,
+    xLx, ← g_low]
   sorry
 
 theorem cheeger_ineq_easy (hc : G.Connected) : gap G hc ≤ 2 * (minConductance G : ℝ) := by
