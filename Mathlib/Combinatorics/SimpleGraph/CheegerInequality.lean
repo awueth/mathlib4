@@ -60,30 +60,28 @@ end preliminaries
 section easy_inequality
 
 /- For a set s with minimal conductance, R(g) ≤ 2 h_G -/
-noncomputable def g_low (s : Finset V) : WithLp 2 (V → ℝ) :=
-  (WithLp.equiv 2 (V → ℝ)).symm <|
-  (Set.indicator s fun _ => (volume G univ : ℝ)) - (fun _ => (volume G s : ℝ))
+noncomputable def g_low (s : Finset V) : WithLp 2 (V → ℝ) := (WithLp.equiv 2 (V → ℝ)).symm <|
+  (Set.indicator s fun v => Real.sqrt (G.degree v) * (volume G univ : ℝ)) -
+  (fun v => Real.sqrt (G.degree v) * (volume G s : ℝ))
 
 /- g_low ⟂ D^(1/2) 1 -/
 theorem g_low_orthogonal (s : Finset V) :
-    ⟪(WithLp.equiv 2 (V → ℝ)).symm <| fun v ↦ G.degree v, g_low G s⟫_ℝ = 0 := by
+    ⟪(WithLp.equiv 2 (V → ℝ)).symm <| fun v ↦ Real.sqrt (G.degree v), g_low G s⟫_ℝ = 0 := by
   rw [g_low, WithLp.equiv_symm_sub, inner_sub_right]
-  have h1 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ ↑(SimpleGraph.degree G v),
-      (WithLp.equiv 2 (V → ℝ)).symm (Set.indicator ↑s fun _ ↦ ↑(volume G univ))⟫_ℝ =
+  have h1 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v),
+      (WithLp.equiv 2 (V → ℝ)).symm
+        (Set.indicator ↑s fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v) * ↑(volume G univ))⟫_ℝ =
       volume G s * (volume G univ) := by
-    simp [Set.indicator, Set.indicator_apply, volume, sum_mul]
-  have h2 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ ↑(SimpleGraph.degree G v),
-      (WithLp.equiv 2 (V → ℝ)).symm fun _ ↦ ↑(volume G s)⟫_ℝ = volume G s * (volume G univ) := by
-    simp
-    rw [← Finset.sum_mul]
-    have h3 : (∑ i : V, (SimpleGraph.degree G i : ℝ)) = (volume G univ : ℝ)  := by
-      simp [volume]
-    rw [h3, mul_comm]
+    simp [Set.indicator, Set.indicator_apply, volume, sum_mul, ← mul_assoc]
+  have h2 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v),
+      (WithLp.equiv 2 (V → ℝ)).symm fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v) * ↑(volume G s)⟫_ℝ =
+      volume G s * (volume G univ) := by
+    simp [← mul_assoc, ← sum_mul, volume, mul_comm]
   rw [h1, h2, sub_self]
 
 /- Orthogonal complement of D^(1/2) * 1 -/
 noncomputable def sqrt_deg_perp :=
-  (ℝ ∙ ((WithLp.equiv 2 (V → ℝ)).symm <| fun v ↦ G.degree v))ᗮ
+  (ℝ ∙ ((WithLp.equiv 2 (V → ℝ)).symm <| fun v ↦ Real.sqrt (G.degree v)))ᗮ
 
 /- λ = inf R(g) over g ⟂ D^(1/2) 1. Follows from Courant fischer. Uses the fact λ = λ₁ which
 is true since G is connected. -/
@@ -118,8 +116,8 @@ theorem xLx (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix *ᵥ x = (∑ i : V, �
 theorem gLg (s : Finset V) : ContinuousLinearMap.reApplyInnerSelf (normalLapMatrixCLM G) (g_low G s) =
     cut G s * (volume G s)^2 := by
   rw [normalLapMatrixCLM, g_low, reApplyInnerSelf_matrix, xLx]
-  conv_lhs => arg 1; arg 2; intro i; arg 2; intro j;
-
+  simp
+  sorry
 
 /- R(g) ≤ 2 * h -/
 theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minConductance G) :
