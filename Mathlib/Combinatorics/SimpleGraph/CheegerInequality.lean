@@ -5,6 +5,7 @@ import Mathlib.Analysis.NormedSpace.Star.Matrix
 import Mathlib.Data.Fin.Tuple.Sort
 import Mathlib.Analysis.InnerProductSpace.CourantFischer
 import Mathlib.Data.FinEnum
+import Mathlib.Data.Matrix.Basic
 
 
 open BigOperators Finset Matrix
@@ -42,17 +43,20 @@ noncomputable instance : LinearOrder (Module.End.Eigenvalues (toLin' G.normalLap
   rw [Module.End.Eigenvalues]
   infer_instance
 
+/-
 theorem eigenvalues_pos_Nonempty : (eigenvalues_pos G).Nonempty := by
   simp [Finset.Nonempty, eigenvalues_pos]
   simp only [Module.End.Eigenvalues._eq_1]
   obtain ⟨v, t, ht, hv, h⟩ := Matrix.IsHermitian.exists_eigenvector_of_ne_zero (A := G.normalLapMatrix) (G.isSymm_normalLapMatrix) (sorry)
   use ⟨t, sorry⟩
   sorry
+-/
 
 /- Since G is connected, the kernel is one dimensional and there is a positive eigenvalue.
-G being a nontrivial graph would suffice however. -/
-noncomputable def gap' (hc : G.Connected) : Module.End.Eigenvalues (Matrix.toLin' G.normalLapMatrix)
+G being a nontrivial graph would suffice however.
+noncomputable def gap (hc : G.Connected) : Module.End.Eigenvalues (Matrix.toLin' G.normalLapMatrix)
   := (eigenvalues_pos G).min' (sorry)
+-/
 
 /- Why can the tuple be evaluated at -1? Why no proof of nonemptyness? -/
 noncomputable def gap : ℝ :=
@@ -69,27 +73,45 @@ end preliminaries
 
 ----------------------------------------------------------------------------------------------------
 
+theorem applyInner_matrix (A : Matrix V V ℝ) (x y : V → ℝ) :
+    ⟪(Matrix.toEuclideanCLM (𝕜 := ℝ) A) ((WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm x),
+    (WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm y⟫_ℝ = x ⬝ᵥ A *ᵥ y := by
+  simp [Matrix.toEuclideanCLM_piLp_equiv_symm A x, dotProduct, mulVec]
+  sorry
+
+theorem reApplyInnerSelf_matrix (A : Matrix V V ℝ) (x : V → ℝ) : ContinuousLinearMap.reApplyInnerSelf
+    (Matrix.toEuclideanCLM (𝕜 := ℝ) A) ((WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm x) = x ⬝ᵥ A *ᵥ x := by
+  rw [ContinuousLinearMap.reApplyInnerSelf, applyInner_matrix, IsROrC.re_to_real]
+
+theorem xLx (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix *ᵥ x = (∑ i : V, ∑ j : V,
+    if G.Adj i j then (x i / Real.sqrt (G.degree i) - x j / Real.sqrt (G.degree j))^2 else 0) / 2 := by
+  rw [SimpleGraph.normalLapMatrix]
+  sorry
+
+----------------------------------------------------------------------------------------------------
+
 section easy_inequality
+
+noncomputable def g_aux (s : Finset V) : V → ℝ :=
+  (volume G univ : V → ℝ) * (Set.indicator s 1) - (volume G s : V → ℝ)
+
+noncomputable def D_sqrt :=  diagonal (Real.sqrt ∘ (G.degree ·))
 
 /- For a set s with minimal conductance, R(g) ≤ 2 h_G -/
 noncomputable def g_low (s : Finset V) : WithLp 2 (V → ℝ) := (WithLp.equiv 2 (V → ℝ)).symm <|
-  (Set.indicator s fun v => Real.sqrt (G.degree v) * (volume G univ : ℝ)) -
-  (fun v => Real.sqrt (G.degree v) * (volume G s : ℝ))
+  (D_sqrt G) *ᵥ (g_aux G s)
+
+theorem g_low_apply (s : Finset V) (v : V) : g_low G s v =
+    (if v ∈ s then Real.sqrt (G.degree v) * (volume G univ : ℝ) else 0) - (Real.sqrt (G.degree v) * (volume G s : ℝ)) := by
+  simp only [g_low, D_sqrt, g_aux, Pi.coe_nat, WithLp.equiv_symm_pi_apply, mulVec, dotProduct_sub,
+    diagonal_dotProduct, Function.comp_apply, Pi.mul_apply, Set.indicator_apply, mem_coe,
+    Pi.one_apply, mul_ite, mul_one, mul_zero]
 
 /- g_low ⟂ D^(1/2) 1 -/
 theorem g_low_orthogonal (s : Finset V) :
     ⟪(WithLp.equiv 2 (V → ℝ)).symm <| fun v ↦ Real.sqrt (G.degree v), g_low G s⟫_ℝ = 0 := by
-  rw [g_low, WithLp.equiv_symm_sub, inner_sub_right]
-  have h1 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v),
-      (WithLp.equiv 2 (V → ℝ)).symm
-        (Set.indicator ↑s fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v) * ↑(volume G univ))⟫_ℝ =
-      volume G s * (volume G univ) := by
-    simp [Set.indicator, Set.indicator_apply, volume, sum_mul, ← mul_assoc]
-  have h2 : ⟪(WithLp.equiv 2 (V → ℝ)).symm fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v),
-      (WithLp.equiv 2 (V → ℝ)).symm fun v ↦ Real.sqrt ↑(SimpleGraph.degree G v) * ↑(volume G s)⟫_ℝ =
-      volume G s * (volume G univ) := by
-    simp [← mul_assoc, ← sum_mul, volume, mul_comm]
-  rw [h1, h2, sub_self]
+  simp [g_low_apply, finsum_congr, mul_sub, ← mul_assoc, ← sum_mul, volume, mul_comm]
+
 
 /- Orthogonal complement of D^(1/2) * 1 -/
 noncomputable def sqrt_deg_perp :=
@@ -103,8 +125,6 @@ theorem gap_eq_inf_rayleigh :
   apply le_antisymm
   · sorry
   · sorry
-
-
 
 /- λ ≤ R(g) -/
 theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G) :
@@ -120,27 +140,25 @@ theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G)
   · apply Set.mem_image_of_mem -- g ⟂ D^(1/2) 1
     rw [sqrt_deg_perp, SetLike.mem_coe, Submodule.mem_orthogonal_singleton_iff_inner_right, g_low_orthogonal]
 
-theorem reApplyInnerSelf_matrix (A : Matrix V V ℝ) (x : V → ℝ) : ContinuousLinearMap.reApplyInnerSelf
-    (Matrix.toEuclideanCLM (𝕜 := ℝ) A) ((WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm x) = x ⬝ᵥ A *ᵥ x := by
-  simp [ContinuousLinearMap.reApplyInnerSelf, Matrix.toEuclideanCLM_piLp_equiv_symm A x,
-    dotProduct, mul_comm]
-
-theorem xLx (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix *ᵥ x = (∑ i : V, ∑ j : V,
-    if G.Adj i j then (x i / Real.sqrt (G.degree i) - x j / Real.sqrt (G.degree j))^2 else 0) / 2 := by
-  rw [SimpleGraph.normalLapMatrix]
+theorem gLg (s : Finset V) : ContinuousLinearMap.reApplyInnerSelf (normalLapMatrixCLM G) (g_low G s) =
+    cut G s * (volume G univ)^2 := by
+  rw [normalLapMatrixCLM, g_low, reApplyInnerSelf_matrix, xLx', ← toLinearMap₂'_apply',
+    G.lapMatrix_toLinearMap₂' ℝ, g_aux]
+  simp only [Pi.coe_nat, Pi.sub_apply, Pi.mul_apply, sub_sub_sub_cancel_right]
+  conv_lhs => arg 1; arg 2; intro u; arg 2; intro v; congr; rfl; rw [← mul_sub, mul_pow]
+  conv_lhs => arg 1; arg 2; intro u; arg 2; intro v; rw [← mul_ite_zero]
+  conv_lhs => arg 1; arg 2; intro u; rw [← mul_sum]
+  rw [← mul_sum]
   sorry
 
-theorem gLg (s : Finset V) : ContinuousLinearMap.reApplyInnerSelf (normalLapMatrixCLM G) (g_low G s) =
-    cut G s * (volume G s)^2 := by
-  rw [normalLapMatrixCLM, g_low, reApplyInnerSelf_matrix, xLx]
-  simp
+theorem norm_g_sq (s : Finset V) :
+    ‖g_low G s‖ ^ 2 = (volume G univ) * (volume G s) * (volume G sᶜ) := by
   sorry
 
 /- R(g) ≤ 2 * h -/
 theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minConductance G) :
-  ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) (g_low G s) ≤ 2 * (minConductance G) := by
-  rw [ContinuousLinearMap.rayleighQuotient, normalLapMatrixCLM, g_low, reApplyInnerSelf_matrix,
-    xLx, ← g_low]
+    ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) (g_low G s) ≤ 2 * (minConductance G) := by
+  simp [ContinuousLinearMap.rayleighQuotient, gLg, norm_g_sq]
   sorry
 
 theorem cheeger_ineq_easy : gap hV G ≤ 2 * (minConductance G : ℝ) := by
