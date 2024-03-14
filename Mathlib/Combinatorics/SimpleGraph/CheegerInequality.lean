@@ -9,7 +9,7 @@ import Mathlib.Data.FinEnum
 
 open BigOperators Finset Matrix
 
-variable {V : Type*} [Fintype V] [Nonempty V] [DecidableEq V]
+variable {V : Type*} [Fintype V] [Nonempty V] [DecidableEq V] (hV : 1 < Fintype.card V )
 variable (G : SimpleGraph V) [DecidableRel G.Adj]
 
 section preliminaries
@@ -42,14 +42,26 @@ noncomputable instance : LinearOrder (Module.End.Eigenvalues (toLin' G.normalLap
   rw [Module.End.Eigenvalues]
   infer_instance
 
+theorem eigenvalues_pos_Nonempty : (eigenvalues_pos G).Nonempty := by
+  simp [Finset.Nonempty, eigenvalues_pos]
+  simp only [Module.End.Eigenvalues._eq_1]
+  obtain ⟨v, t, ht, hv, h⟩ := Matrix.IsHermitian.exists_eigenvector_of_ne_zero (A := G.normalLapMatrix) (G.isSymm_normalLapMatrix) (sorry)
+  use ⟨t, sorry⟩
+  sorry
+
 /- Since G is connected, the kernel is one dimensional and there is a positive eigenvalue.
 G being a nontrivial graph would suffice however. -/
-noncomputable def gap (hc : G.Connected) : Module.End.Eigenvalues (Matrix.toLin' G.normalLapMatrix)
+noncomputable def gap' (hc : G.Connected) : Module.End.Eigenvalues (Matrix.toLin' G.normalLapMatrix)
   := (eigenvalues_pos G).min' (sorry)
 
 /- Why can the tuple be evaluated at -1? Why no proof of nonemptyness? -/
-noncomputable def gap' : ℝ :=
-  symm_matrix_eigenvalues_sorted G.normalLapMatrix G.isSymm_normalLapMatrix 1
+noncomputable def gap : ℝ :=
+  symm_matrix_eigenvalues_sorted G.isSymm_normalLapMatrix ⟨1, hV⟩
+
+theorem gap_is_eig :
+    Module.End.HasEigenvalue (Matrix.toLin' G.normalLapMatrix) (gap hV G) := by
+  rw [gap]
+  apply (symm_matrix_eigenvalues_sorted_is_eig G.isSymm_normalLapMatrix ⟨1, _⟩)
 
 noncomputable def normalLapMatrixCLM := (Matrix.toEuclideanCLM (𝕜 := ℝ) G.normalLapMatrix)
 
@@ -85,14 +97,19 @@ noncomputable def sqrt_deg_perp :=
 
 /- λ = inf R(g) over g ⟂ D^(1/2) 1. Follows from Courant fischer. Uses the fact λ = λ₁ which
 is true since G is connected. -/
-theorem gap_eq_inf_rayleigh (hc : G.Connected) :
-    gap G hc  = sInf (ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) '' (sqrt_deg_perp G)) := by
-  sorry
+theorem gap_eq_inf_rayleigh :
+    gap hV G  = sInf (ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) '' (sqrt_deg_perp G)) := by
+  rw [sInf_image']
+  apply le_antisymm
+  · sorry
+  · sorry
+
+
 
 /- λ ≤ R(g) -/
-theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G) (hc : G.Connected) :
-  gap G hc ≤ ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) (g_low G s) := by
-  rw [gap_eq_inf_rayleigh]
+theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G) :
+  gap hV G ≤ ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) (g_low G s) := by
+  rw [gap_eq_inf_rayleigh hV G]
   apply csInf_le
   · simp [BddBelow, Set.nonempty_def]
     use 0 -- 0 is a lower bound of the rayleigh quotient. Theorem for definite matrices?
@@ -126,10 +143,10 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
     xLx, ← g_low]
   sorry
 
-theorem cheeger_ineq_easy (hc : G.Connected) : gap G hc ≤ 2 * (minConductance G : ℝ) := by
-  obtain ⟨s, _, h⟩ := Finset.exists_mem_eq_inf' universe_powerSet_nonempty (conductance G)
-  rw [← minConductance] at h
-  apply LE.le.trans (gap_le_rayleigh G s (Eq.symm h) hc) (rayleigh_le_minConductance G s (Eq.symm h))
+theorem cheeger_ineq_easy : gap hV G ≤ 2 * (minConductance G : ℝ) := by
+    obtain ⟨s, _, h⟩ := Finset.exists_mem_eq_inf' universe_powerSet_nonempty (conductance G)
+    rw [← minConductance] at h
+    apply LE.le.trans (gap_le_rayleigh hV G s (Eq.symm h)) (rayleigh_le_minConductance G s (Eq.symm h))
 
 end easy_inequality
 
@@ -157,13 +174,13 @@ theorem my_ineq1 (f : V → ℝ) : minConductance G ≤ (min_sweep_conductance G
   use s
 
 /- α² / 2 ≤ λ, long chain of inequalities -/
-theorem my_ineq2 (f : V → ℝ) (hc : G.Connected)
-  (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap G hc) f) :
-  (min_sweep_conductance G f : ℝ)^2 / 2 ≤ gap G hc := sorry
+theorem my_ineq2 {f : V → ℝ}
+  (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) f) :
+  (min_sweep_conductance G f : ℝ)^2 / 2 ≤ gap hV G := sorry
 
 /- h_G²/2 ≤ α²/2 ≤ λ -/
-theorem cheeger_ineq_hard (hc : G.Connected) : (minConductance G : ℝ)^2 / 2 ≤ gap G hc := by
-  obtain ⟨f, hf⟩ := Module.End.HasEigenvalue.exists_hasEigenvector (gap G hc).2
+theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap hV G := by
+  obtain ⟨f, hf⟩ := Module.End.HasEigenvalue.exists_hasEigenvector (gap_is_eig hV G) --(gap G hc).2
   have h : minConductance G^2 / 2 ≤ (min_sweep_conductance G f)^2 / 2 := by
     simp [NNReal.le_div_iff_mul_le]
     rw [← NNReal.coe_le_coe]
@@ -176,4 +193,4 @@ theorem cheeger_ineq_hard (hc : G.Connected) : (minConductance G : ℝ)^2 / 2 �
     · exact my_ineq1 G f
   calc
     (minConductance G)^2 / 2 ≤ (min_sweep_conductance G f : ℝ)^2 / 2 := h
-    _ ≤ ↑(gap G hc) := by exact my_ineq2 G f hc hf
+    _ ≤ ↑(gap hV G) := by exact my_ineq2 hV G hf
