@@ -207,4 +207,6 @@ theorem card_ConnectedComponent_eq_rank_ker_lapMatrix : Fintype.card G.Connected
     FiniteDimensional.finrank ℝ (LinearMap.ker (Matrix.toLin' (G.lapMatrix ℝ))) := by
   rw [FiniteDimensional.finrank_eq_card_basis (lapMatrix_ker_basis G)]
 
+theorem posSemidef_normalLapMatrix : PosSemidef (G.normalLapMatrix) := sorry
+
 end SimpleGraph

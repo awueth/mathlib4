@@ -73,20 +73,38 @@ end preliminaries
 
 ----------------------------------------------------------------------------------------------------
 
-theorem applyInner_matrix (A : Matrix V V ℝ) (x y : V → ℝ) :
-    ⟪(Matrix.toEuclideanCLM (𝕜 := ℝ) A) ((WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm x),
-    (WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm y⟫_ℝ = x ⬝ᵥ A *ᵥ y := by
-  simp [Matrix.toEuclideanCLM_piLp_equiv_symm A x, dotProduct, mulVec]
-  sorry
+theorem matrixReApplyInnerSelf (A : Matrix V V ℝ) (x : WithLp 2 (V → ℝ)) :
+    (Matrix.toEuclideanCLM (𝕜 := ℝ) A).reApplyInnerSelf x =
+    x ⬝ᵥ A *ᵥ x := by
+  rw [ContinuousLinearMap.reApplyInnerSelf, EuclideanSpace.inner_eq_star_dotProduct,
+    piLp_equiv_toEuclideanCLM, toLin'_apply, star_trivial, IsROrC.re_to_real, dotProduct_comm]
+  rfl
 
-theorem reApplyInnerSelf_matrix (A : Matrix V V ℝ) (x : V → ℝ) : ContinuousLinearMap.reApplyInnerSelf
-    (Matrix.toEuclideanCLM (𝕜 := ℝ) A) ((WithLp.equiv 2 ((i : V) → (fun _ ↦ ℝ) i)).symm x) = x ⬝ᵥ A *ᵥ x := by
-  rw [ContinuousLinearMap.reApplyInnerSelf, applyInner_matrix, IsROrC.re_to_real]
 
+theorem matrixRayleighQuotient (A : Matrix V V ℝ) (x : WithLp 2 (V → ℝ)) :
+    (Matrix.toEuclideanCLM (𝕜 := ℝ) A).rayleighQuotient x =
+    x ⬝ᵥ A *ᵥ x / x ⬝ᵥ x := by
+  rw [ContinuousLinearMap.rayleighQuotient, matrixReApplyInnerSelf,
+    ← inner_self_eq_norm_sq (𝕜 := ℝ), EuclideanSpace.inner_eq_star_dotProduct]
+  rfl
+
+theorem matrixreApplyInnerSelf' (A : Matrix V V ℝ) (x : V → ℝ) :
+    (Matrix.toEuclideanCLM (𝕜 := ℝ) A).reApplyInnerSelf ((WithLp.equiv 2 (V → ℝ)).symm x) =
+    x ⬝ᵥ A *ᵥ x := by
+  rw [matrixReApplyInnerSelf]
+  rfl
+
+theorem matrixRayleighQuotient' (A : Matrix V V ℝ) (x : V → ℝ) :
+    (Matrix.toEuclideanCLM (𝕜 := ℝ) A).rayleighQuotient ((WithLp.equiv 2 (V → ℝ)).symm x) =
+    x ⬝ᵥ A *ᵥ x / x ⬝ᵥ x := by
+  rw [matrixRayleighQuotient]
+  rfl
+/-
 theorem xLx (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix *ᵥ x = (∑ i : V, ∑ j : V,
     if G.Adj i j then (x i / Real.sqrt (G.degree i) - x j / Real.sqrt (G.degree j))^2 else 0) / 2 := by
   rw [SimpleGraph.normalLapMatrix]
   sorry
+-/
 
 ----------------------------------------------------------------------------------------------------
 
@@ -120,7 +138,7 @@ noncomputable def sqrt_deg_perp :=
 /- λ = inf R(g) over g ⟂ D^(1/2) 1. Follows from Courant fischer. Uses the fact λ = λ₁ which
 is true since G is connected. -/
 theorem gap_eq_inf_rayleigh :
-    gap hV G  = sInf (ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) '' (sqrt_deg_perp G)) := by
+    gap hV G  = sInf ((normalLapMatrixCLM G).rayleighQuotient '' (sqrt_deg_perp G)) := by
   rw [sInf_image']
   apply le_antisymm
   · sorry
@@ -128,37 +146,29 @@ theorem gap_eq_inf_rayleigh :
 
 /- λ ≤ R(g) -/
 theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G) :
-  gap hV G ≤ ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) (g_low G s) := by
+  gap hV G ≤ (normalLapMatrixCLM G).rayleighQuotient (g_low G s) := by
   rw [gap_eq_inf_rayleigh hV G]
   apply csInf_le
   · simp [BddBelow, Set.nonempty_def]
     use 0 -- 0 is a lower bound of the rayleigh quotient. Theorem for definite matrices?
     simp [lowerBounds]
-    intro f hf
-    rw [ContinuousLinearMap.rayleighQuotient, ContinuousLinearMap.reApplyInnerSelf, IsROrC.re_to_real]
-    sorry
+    intro f _
+    rw [normalLapMatrixCLM, ContinuousLinearMap.rayleighQuotient, matrixReApplyInnerSelf]
+    apply div_nonneg
+    · apply Matrix.PosSemidef.re_dotProduct_nonneg (𝕜 := ℝ) G.posSemidef_normalLapMatrix f
+    · apply sq_nonneg
   · apply Set.mem_image_of_mem -- g ⟂ D^(1/2) 1
     rw [sqrt_deg_perp, SetLike.mem_coe, Submodule.mem_orthogonal_singleton_iff_inner_right, g_low_orthogonal]
 
-theorem gLg (s : Finset V) : ContinuousLinearMap.reApplyInnerSelf (normalLapMatrixCLM G) (g_low G s) =
-    cut G s * (volume G univ)^2 := by
-  rw [normalLapMatrixCLM, g_low, reApplyInnerSelf_matrix, xLx', ← toLinearMap₂'_apply',
-    G.lapMatrix_toLinearMap₂' ℝ, g_aux]
-  simp only [Pi.coe_nat, Pi.sub_apply, Pi.mul_apply, sub_sub_sub_cancel_right]
-  conv_lhs => arg 1; arg 2; intro u; arg 2; intro v; congr; rfl; rw [← mul_sub, mul_pow]
-  conv_lhs => arg 1; arg 2; intro u; arg 2; intro v; rw [← mul_ite_zero]
-  conv_lhs => arg 1; arg 2; intro u; rw [← mul_sum]
-  rw [← mul_sum]
-  sorry
-
-theorem norm_g_sq (s : Finset V) :
-    ‖g_low G s‖ ^ 2 = (volume G univ) * (volume G s) * (volume G sᶜ) := by
-  sorry
-
 /- R(g) ≤ 2 * h -/
 theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minConductance G) :
-    ContinuousLinearMap.rayleighQuotient (normalLapMatrixCLM G) (g_low G s) ≤ 2 * (minConductance G) := by
-  simp [ContinuousLinearMap.rayleighQuotient, gLg, norm_g_sq]
+    (normalLapMatrixCLM G).rayleighQuotient (g_low G s) ≤ 2 * (minConductance G) := by
+  rw [normalLapMatrixCLM, g_low, matrixRayleighQuotient']
+  have h1 : D_sqrt G *ᵥ g_aux G s ⬝ᵥ SimpleGraph.normalLapMatrix G *ᵥ D_sqrt G *ᵥ g_aux G s =
+      cut G s * (volume G univ)^2 := sorry
+  have h2 : D_sqrt G *ᵥ g_aux G s ⬝ᵥ D_sqrt G *ᵥ g_aux G s =
+      (volume G univ) * (volume G s) * (volume G sᶜ) := sorry
+  rw [h1, h2]
   sorry
 
 theorem cheeger_ineq_easy : gap hV G ≤ 2 * (minConductance G : ℝ) := by
