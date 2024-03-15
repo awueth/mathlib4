@@ -274,6 +274,29 @@ theorem eigenvectorBasis_apply_self_apply (v : E) (i : Fin n) :
 
 end Version2
 
+----------------------------------------------------------------------------------------------------
+
+variable (hT : T.IsSymmetric) {n : ℕ} (hn : FiniteDimensional.finrank 𝕜 E = n)
+
+#check  eigenvectorBasis hT hn
+#check OrthonormalBasis.sum_repr (eigenvectorBasis hT hn)
+
+variable (v : E)
+#check diagonalization hT v
+
+theorem my_thm (v : E) : ⟪T v, v⟫  =
+    ∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(eigenvectorBasis hT hn).repr v i‖ ^ 2) := by
+  rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) (T v)]
+  conv_lhs => arg 2; rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) v]
+  rw [Orthonormal.inner_sum]
+  · simp only [eigenvectorBasis_apply_self_apply]
+    simp only [map_mul, IsROrC.conj_ofReal, IsROrC.ofReal_sum, IsROrC.ofReal_mul, IsROrC.ofReal_pow]
+    conv_lhs => arg 2; intro i; rw [mul_assoc, IsROrC.conj_mul]
+  · apply OrthonormalBasis.orthonormal
+
+
+----------------------------------------------------------------------------------------------------
+
 end IsSymmetric
 
 end LinearMap
