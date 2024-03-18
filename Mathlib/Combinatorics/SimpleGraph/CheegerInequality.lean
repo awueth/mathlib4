@@ -160,7 +160,9 @@ theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G)
   · apply Set.mem_image_of_mem -- g ⟂ D^(1/2) 1
     rw [sqrt_deg_perp, SetLike.mem_coe, Submodule.mem_orthogonal_singleton_iff_inner_right, g_low_orthogonal]
 
-/- R(g) ≤ 2 * h -/
+example : ((volume G univ) : ℝ) / ↑(volume G univ) ≤ 1 := by apply div_self_le_one
+
+/- R(g) ≤ 2 * h -/ -- Remember this theorem: max_mul_min
 theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minConductance G) :
     (normalLapMatrixCLM G).rayleighQuotient (g_low G s) ≤ 2 * (minConductance G) := by
   rw [normalLapMatrixCLM, g_low, matrixRayleighQuotient']
@@ -169,7 +171,19 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
   have h2 : D_sqrt G *ᵥ g_aux G s ⬝ᵥ D_sqrt G *ᵥ g_aux G s =
       (volume G univ) * (volume G s) * (volume G sᶜ) := sorry
   rw [h1, h2]
-  sorry
+  have h3 : ((volume G univ) : ℝ) / ↑(volume G univ) ≤ 1 := by apply div_self_le_one
+  calc
+    _ = ↑(cut G s) * ↑(volume G univ) * (↑(volume G univ) / ↑(volume G univ)) / (↑(volume G s) * ↑(volume G sᶜ)) := by ring
+    _ ≤ ↑(cut G s) * ↑(volume G univ) * (1 : ℝ) / (↑(volume G s) * ↑(volume G sᶜ)) := by sorry --rw [div_self_le_one ((volume G univ) : ℝ)]
+    _ = ↑(cut G s) * ↑(volume G univ) / (↑(volume G s) * ↑(volume G sᶜ)) := by simp only [mul_one]
+    _ ≤ ↑(cut G s) * ↑(volume G univ) / (max ↑(volume G s) ↑(volume G sᶜ) * min ↑(volume G s) ↑(volume G sᶜ)) := by rw [max_mul_min]
+    _ = ↑(cut G s) * (↑(volume G univ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by ring
+    _ ≤ ↑(cut G s) * (2 * max ↑(volume G s) ↑(volume G sᶜ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry
+    _ ≤ ↑(cut G s) * 2 / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry -- rw [div_self_le_one]
+    _ = 2 * (↑(cut G s) / (min ↑(volume G s) ↑(volume G sᶜ))) := by ring
+    _ = 2 * (conductance G s) := by simp [conductance]
+    _ ≤ 2 * (minConductance G) := by rw [hs];
+
 
 theorem cheeger_ineq_easy : gap hV G ≤ 2 * (minConductance G : ℝ) := by
     obtain ⟨s, _, h⟩ := Finset.exists_mem_eq_inf' universe_powerSet_nonempty (conductance G)
