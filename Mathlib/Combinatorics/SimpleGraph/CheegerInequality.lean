@@ -11,7 +11,7 @@ import Mathlib.Data.Matrix.Basic
 open BigOperators Finset Matrix
 
 variable {V : Type*} [Fintype V] [Nonempty V] [DecidableEq V] (hV : 1 < Fintype.card V )
-variable (G : SimpleGraph V) [DecidableRel G.Adj]
+variable (G : SimpleGraph V) [DecidableRel G.Adj] (hd : ∀ v : V, 0 < G.degree v)
 
 section preliminaries
 
@@ -83,10 +83,9 @@ theorem matrixReApplyInnerSelf (A : Matrix V V ℝ) (x : WithLp 2 (V → ℝ)) :
 
 theorem matrixRayleighQuotient (A : Matrix V V ℝ) (x : WithLp 2 (V → ℝ)) :
     (Matrix.toEuclideanCLM (𝕜 := ℝ) A).rayleighQuotient x =
-    x ⬝ᵥ A *ᵥ x / x ⬝ᵥ x := by
-  rw [ContinuousLinearMap.rayleighQuotient, matrixReApplyInnerSelf,
-    ← inner_self_eq_norm_sq (𝕜 := ℝ), EuclideanSpace.inner_eq_star_dotProduct]
-  rfl
+    x ⬝ᵥ A *ᵥ x / ∑ i : V, x i ^ 2 := by
+  simp_rw [ContinuousLinearMap.rayleighQuotient, matrixReApplyInnerSelf, PiLp.norm_sq_eq_of_L2,
+    Real.norm_eq_abs, sq_abs]
 
 theorem matrixreApplyInnerSelf' (A : Matrix V V ℝ) (x : V → ℝ) :
     (Matrix.toEuclideanCLM (𝕜 := ℝ) A).reApplyInnerSelf ((WithLp.equiv 2 (V → ℝ)).symm x) =
@@ -96,7 +95,7 @@ theorem matrixreApplyInnerSelf' (A : Matrix V V ℝ) (x : V → ℝ) :
 
 theorem matrixRayleighQuotient' (A : Matrix V V ℝ) (x : V → ℝ) :
     (Matrix.toEuclideanCLM (𝕜 := ℝ) A).rayleighQuotient ((WithLp.equiv 2 (V → ℝ)).symm x) =
-    x ⬝ᵥ A *ᵥ x / x ⬝ᵥ x := by
+    x ⬝ᵥ A *ᵥ x / ∑ i : V, x i ^ 2 := by
   rw [matrixRayleighQuotient]
   rfl
 /-
@@ -105,6 +104,20 @@ theorem xLx (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix *ᵥ x = (∑ i : V, �
   rw [SimpleGraph.normalLapMatrix]
   sorry
 -/
+
+theorem dotProduct_mulVec_normalLapMatrix (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix  *ᵥ x
+    = ((diagonal (Real.sqrt ∘ (G.degree ·)))⁻¹ *ᵥ x) ⬝ᵥ G.lapMatrix ℝ *ᵥ ((diagonal (Real.sqrt ∘ (G.degree ·)))⁻¹ *ᵥ x) := by
+  rw [SimpleGraph.normalLapMatrix, mul_assoc, mulVec_mulVec, ← mulVec_mulVec, dotProduct_mulVec,
+    ← mulVec_transpose, transpose_nonsing_inv, diagonal_transpose]
+
+theorem dotProduct_mulVec_lapMatrix (x : V → ℝ) : (diagonal (Real.sqrt ∘ (G.degree ·)) *ᵥ x) ⬝ᵥ G.normalLapMatrix  *ᵥ (diagonal (Real.sqrt ∘ (G.degree ·)) *ᵥ x)
+    = x ⬝ᵥ G.lapMatrix ℝ *ᵥ x := by
+  rw [dotProduct_mulVec_normalLapMatrix, mulVec_mulVec, Matrix.nonsing_inv_mul, one_mulVec]
+  simp only [IsUnit, det_diagonal, Function.comp_apply, Units.exists_iff_ne_zero]
+  refine prod_ne_zero_iff.mpr ?h.a
+  intro v _
+  simp only [ne_eq, Nat.cast_nonneg, Real.sqrt_eq_zero, Nat.cast_eq_zero]
+  exact Nat.pos_iff_ne_zero.mp (hd v)
 
 ----------------------------------------------------------------------------------------------------
 
@@ -117,11 +130,11 @@ noncomputable def D_sqrt :=  diagonal (Real.sqrt ∘ (G.degree ·))
 
 /- For a set s with minimal conductance, R(g) ≤ 2 h_G -/
 noncomputable def g_low (s : Finset V) : WithLp 2 (V → ℝ) := (WithLp.equiv 2 (V → ℝ)).symm <|
-  (D_sqrt G) *ᵥ (g_aux G s)
+  D_sqrt G *ᵥ (g_aux G s)
 
 theorem g_low_apply (s : Finset V) (v : V) : g_low G s v =
     (if v ∈ s then Real.sqrt (G.degree v) * (volume G univ : ℝ) else 0) - (Real.sqrt (G.degree v) * (volume G s : ℝ)) := by
-  simp only [g_low, D_sqrt, g_aux, Pi.coe_nat, WithLp.equiv_symm_pi_apply, mulVec, dotProduct_sub,
+  simp [g_low, g_aux, D_sqrt, Pi.coe_nat, WithLp.equiv_symm_pi_apply, mulVec, dotProduct_sub,
     diagonal_dotProduct, Function.comp_apply, Pi.mul_apply, Set.indicator_apply, mem_coe,
     Pi.one_apply, mul_ite, mul_one, mul_zero]
 
@@ -167,19 +180,39 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
     (normalLapMatrixCLM G).rayleighQuotient (g_low G s) ≤ 2 * (minConductance G) := by
   rw [normalLapMatrixCLM, g_low, matrixRayleighQuotient']
   have h1 : D_sqrt G *ᵥ g_aux G s ⬝ᵥ SimpleGraph.normalLapMatrix G *ᵥ D_sqrt G *ᵥ g_aux G s =
-      cut G s * (volume G univ)^2 := sorry
-  have h2 : D_sqrt G *ᵥ g_aux G s ⬝ᵥ D_sqrt G *ᵥ g_aux G s =
-      (volume G univ) * (volume G s) * (volume G sᶜ) := sorry
+      cut G s * (volume G univ)^2 := by
+    rw [D_sqrt, dotProduct_mulVec_lapMatrix G hd, g_aux]
+    set L := G.lapMatrix ℝ
+    rw [mulVec_sub, sub_dotProduct]
+    sorry
+  have h2 : ∑ i : V, (D_sqrt G *ᵥ g_aux G s) i ^ (2 : ℕ) =
+      (volume G univ) * (volume G s) * (volume G sᶜ) := by
+    simp [D_sqrt, mulVec_diagonal, mul_pow, g_aux, sub_sq]
+    have hi : (v : V) → (Set.indicator s (1 : V → ℝ) v ^ 2 = Set.indicator s (1 : V → ℝ) v) := by
+      simp [sq, Set.indicator_apply]
+    simp [hi]
+    set d := G.degree with hd
+    set χ := Set.indicator s (1 : V → ℝ) with hχ
+    set VG := volume G univ with hVG
+    set VS := volume G s with hVS
+    set VSC := volume G sᶜ with hVSC
+    calc
+      _ = ∑ x : V, ↑(d x) * ((↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ↑VS ^ 2) := by sorry
+      _ = ∑ x : V, (↑(d x) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ↑(d x) * ↑VS ^ 2) := by sorry
+      _ = ∑ x : V, ↑(d x) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ∑ x : V, ↑(d x) * ↑VS ^ 2 := by sorry
+      _ = (∑ x : s, ↑(d x)) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) + (∑ x : V, ↑(d x)) * ↑VS ^ 2 := by sorry
+      _ = ↑VG * ↑VS * (↑VG - ↑VS) := by sorry
+      _ = ↑VG * ↑VS * ↑VSC := sorry
   rw [h1, h2]
   have h3 : ((volume G univ) : ℝ) / ↑(volume G univ) ≤ 1 := by apply div_self_le_one
   calc
     _ = ↑(cut G s) * ↑(volume G univ) * (↑(volume G univ) / ↑(volume G univ)) / (↑(volume G s) * ↑(volume G sᶜ)) := by ring
-    _ ≤ ↑(cut G s) * ↑(volume G univ) * (1 : ℝ) / (↑(volume G s) * ↑(volume G sᶜ)) := by sorry --rw [div_self_le_one ((volume G univ) : ℝ)]
+    _ ≤ ↑(cut G s) * ↑(volume G univ) * (1 : ℝ) / (↑(volume G s) * ↑(volume G sᶜ)) := by sorry -- simp [div_self_le_one ((volume G univ) : ℝ)]
     _ = ↑(cut G s) * ↑(volume G univ) / (↑(volume G s) * ↑(volume G sᶜ)) := by simp only [mul_one]
     _ ≤ ↑(cut G s) * ↑(volume G univ) / (max ↑(volume G s) ↑(volume G sᶜ) * min ↑(volume G s) ↑(volume G sᶜ)) := by rw [max_mul_min]
     _ = ↑(cut G s) * (↑(volume G univ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by ring
     _ ≤ ↑(cut G s) * (2 * max ↑(volume G s) ↑(volume G sᶜ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry
-    _ ≤ ↑(cut G s) * 2 / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry -- rw [div_self_le_one]
+    _ ≤ ↑(cut G s) * 2 / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry
     _ = 2 * (↑(cut G s) / (min ↑(volume G s) ↑(volume G sᶜ))) := by ring
     _ = 2 * (conductance G s) := by simp [conductance]
     _ ≤ 2 * (minConductance G) := by rw [hs];

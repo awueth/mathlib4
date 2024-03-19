@@ -38,7 +38,19 @@ and `A` the adjacency matrix of `G`. -/
 def lapMatrix [AddGroupWithOne α] : Matrix V V α := G.degMatrix α - G.adjMatrix α
 
 noncomputable def normalLapMatrix : Matrix V V ℝ :=
-  diagonal (Real.sqrt ∘ (G.degree ·))⁻¹ * (G.lapMatrix ℝ) * diagonal (Real.sqrt ∘ (G.degree ·))⁻¹
+  (diagonal (Real.sqrt ∘ (G.degree ·)))⁻¹ * (G.lapMatrix ℝ) * (diagonal (Real.sqrt ∘ (G.degree ·)))⁻¹
+
+
+/-
+theorem isPosSemidef_degMatrix [CommRing α] [PartialOrder α] [StarOrderedRing α] [ZeroLEOneClass α] :
+    PosSemidef (G.degMatrix α) := by
+  rw [degMatrix, posSemidef_diagonal_iff]
+  intro v
+  apply Nat.cast_nonneg' -- or use Nat.cast_nonneg ?  with  [OrderedSemiring α]
+
+noncomputable def normalLapMatrix : Matrix V V ℝ :=
+  (PosSemidef.sqrt (G.isPosSemidef_degMatrix ℝ))⁻¹ * (G.lapMatrix ℝ) * (PosSemidef.sqrt (G.isPosSemidef_degMatrix ℝ))⁻¹
+-/
 
 variable {α}
 
@@ -49,9 +61,9 @@ theorem isSymm_lapMatrix [AddGroupWithOne α] : (G.lapMatrix α).IsSymm :=
   (isSymm_degMatrix _).sub (isSymm_adjMatrix _)
 
 theorem isSymm_normalLapMatrix : (G.normalLapMatrix).IsSymm := by
-  rw [Matrix.IsSymm, normalLapMatrix, transpose_mul, diagonal_transpose]
+  rw [Matrix.IsSymm, normalLapMatrix, transpose_mul, transpose_nonsing_inv, diagonal_transpose]
   conv_lhs => rw [← G.isSymm_lapMatrix]
-  rw [transpose_mul, transpose_transpose, diagonal_transpose, Matrix.mul_assoc]
+  rw [transpose_mul, transpose_transpose, transpose_nonsing_inv, diagonal_transpose, Matrix.mul_assoc]
 
 theorem degMatrix_mulVec_apply [NonAssocSemiring α] (v : V) (vec : V → α) :
     (G.degMatrix α).mulVec vec v = G.degree v * vec v := by
