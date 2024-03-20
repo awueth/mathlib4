@@ -13,6 +13,15 @@ open BigOperators Finset Matrix
 variable {V : Type*} [Fintype V] [Nonempty V] [DecidableEq V] (hV : 1 < Fintype.card V )
 variable (G : SimpleGraph V) [DecidableRel G.Adj] (hd : ∀ v : V, 0 < G.degree v)
 
+noncomputable instance sqrt_degree_invertible :
+    Invertible (diagonal (Real.sqrt ∘ fun x ↦ ↑(G.degree x))) := by
+  refine invertibleOfIsUnitDet (diagonal (Real.sqrt ∘ fun x ↦ ↑(SimpleGraph.degree G x))) ?h
+  simp only [IsUnit, det_diagonal, Function.comp_apply, Units.exists_iff_ne_zero]
+  refine prod_ne_zero_iff.mpr ?h.a
+  intro v _
+  simp only [ne_eq, Nat.cast_nonneg, Real.sqrt_eq_zero, Nat.cast_eq_zero]
+  exact Nat.pos_iff_ne_zero.mp (hd v)
+
 section preliminaries
 
 def volume (s : Finset V) : ℕ := ∑ v in s, G.degree v
@@ -112,12 +121,8 @@ theorem dotProduct_mulVec_normalLapMatrix (x : V → ℝ) : x ⬝ᵥ G.normalLap
 
 theorem dotProduct_mulVec_lapMatrix (x : V → ℝ) : (diagonal (Real.sqrt ∘ (G.degree ·)) *ᵥ x) ⬝ᵥ G.normalLapMatrix  *ᵥ (diagonal (Real.sqrt ∘ (G.degree ·)) *ᵥ x)
     = x ⬝ᵥ G.lapMatrix ℝ *ᵥ x := by
-  rw [dotProduct_mulVec_normalLapMatrix, mulVec_mulVec, Matrix.nonsing_inv_mul, one_mulVec]
-  simp only [IsUnit, det_diagonal, Function.comp_apply, Units.exists_iff_ne_zero]
-  refine prod_ne_zero_iff.mpr ?h.a
-  intro v _
-  simp only [ne_eq, Nat.cast_nonneg, Real.sqrt_eq_zero, Nat.cast_eq_zero]
-  exact Nat.pos_iff_ne_zero.mp (hd v)
+  haveI : Invertible (diagonal (Real.sqrt ∘ (G.degree ·))) := sqrt_degree_invertible G hd
+  rw [dotProduct_mulVec_normalLapMatrix, mulVec_mulVec, inv_mul_of_invertible, one_mulVec]
 
 ----------------------------------------------------------------------------------------------------
 
@@ -183,8 +188,13 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
       cut G s * (volume G univ)^2 := by
     rw [D_sqrt, dotProduct_mulVec_lapMatrix G hd, g_aux]
     set L := G.lapMatrix ℝ
-    rw [mulVec_sub, sub_dotProduct]
-    sorry
+    have h0 : L *ᵥ ↑(volume G s) = 0 := by sorry
+    have h0' : ↑(volume G s) ᵥ* L = 0 := by sorry
+    rw [mulVec_sub, h0, sub_zero, dotProduct_mulVec, sub_vecMul, h0', sub_zero, ← dotProduct_mulVec,
+      ← nsmul_eq_mul, mulVec_smul, dotProduct_smul, smul_dotProduct]
+    have hc : Set.indicator (↑s) 1 ⬝ᵥ L *ᵥ Set.indicator (↑s) 1 = ↑(cut G s) := sorry -- this shoul be a theorem
+    simp_rw [hc, nsmul_eq_mul]
+    ring
   have h2 : ∑ i : V, (D_sqrt G *ᵥ g_aux G s) i ^ (2 : ℕ) =
       (volume G univ) * (volume G s) * (volume G sᶜ) := by
     simp [D_sqrt, mulVec_diagonal, mul_pow, g_aux, sub_sq]
@@ -221,7 +231,7 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
 theorem cheeger_ineq_easy : gap hV G ≤ 2 * (minConductance G : ℝ) := by
     obtain ⟨s, _, h⟩ := Finset.exists_mem_eq_inf' universe_powerSet_nonempty (conductance G)
     rw [← minConductance] at h
-    apply LE.le.trans (gap_le_rayleigh hV G s (Eq.symm h)) (rayleigh_le_minConductance G s (Eq.symm h))
+    apply LE.le.trans (gap_le_rayleigh hV G s (Eq.symm h)) (rayleigh_le_minConductance G hd s (Eq.symm h))
 
 end easy_inequality
 
