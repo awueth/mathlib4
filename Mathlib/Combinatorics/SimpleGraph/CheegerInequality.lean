@@ -28,6 +28,11 @@ section preliminaries
 def volume (s : Finset V) : ℕ := ∑ v in s, G.degree v
 
 theorem volume_compl (s : Finset V) : volume G sᶜ = volume G univ - volume G s := by
+  unfold volume
+  rw [← sum_add_sum_compl s, add_tsub_cancel_left]
+
+theorem volume_monotone {s t : Finset V} (h : s ⊆ t) : volume G s ≤ volume G t := by
+  unfold volume
   sorry
 
 noncomputable def conductance (s : Finset V) : NNReal := cut G s / min (volume G s) (volume G sᶜ)
@@ -208,7 +213,7 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
       _ = ∑ x : V, ↑(d x) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ∑ x : V, ↑(d x) * ↑VS ^ 2 := by sorry
       _ = (∑ x : s, ↑(d x)) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) + (∑ x : V, ↑(d x)) * ↑VS ^ 2 := by sorry
       _ = ↑VG * ↑VS * (↑VG - ↑VS) := by sorry
-      _ = ↑VG * ↑VS * ↑VSC := by rw [hVSC, hVG, hVS, volume_compl]; sorry
+      _ = ↑VG * ↑VS * ↑VSC := by rw [hVSC, hVG, hVS, volume_compl, Nat.cast_sub]; apply volume_monotone; exact subset_univ s
   rw [h1, h2]
   calc
     _ = ↑(cut G s) * ↑(volume G univ) * (↑(volume G univ) / ↑(volume G univ)) / (↑(volume G s) * ↑(volume G sᶜ)) := by ring
@@ -216,8 +221,8 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
     _ = ↑(cut G s) * ↑(volume G univ) / (↑(volume G s) * ↑(volume G sᶜ)) := by simp only [mul_one]
     _ ≤ ↑(cut G s) * ↑(volume G univ) / (max ↑(volume G s) ↑(volume G sᶜ) * min ↑(volume G s) ↑(volume G sᶜ)) := by rw [max_mul_min]
     _ = ↑(cut G s) * (↑(volume G univ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by ring
-    _ ≤ ↑(cut G s) * (2 * max ↑(volume G s) ↑(volume G sᶜ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry
-    _ ≤ ↑(cut G s) * 2 / (min ↑(volume G s) ↑(volume G sᶜ)) := by gcongr; sorry
+    _ ≤ ↑(cut G s) * 2 * (max ↑(volume G s) ↑(volume G sᶜ) / max ↑(volume G s) ↑(volume G sᶜ)) * (1 / (min ↑(volume G s) ↑(volume G sᶜ))) := by sorry
+    _ ≤ ↑(cut G s) * 2 * 1 * (1 / (min ↑(volume G s) ↑(volume G sᶜ))) := by rel [div_self_le_one (((max ↑(volume G s) ↑(volume G sᶜ))) : ℝ)]
     _ = 2 * (↑(cut G s) / (min ↑(volume G s) ↑(volume G sᶜ))) := by ring
     _ = 2 * (conductance G s) := by simp [conductance]
     _ ≤ 2 * (minConductance G) := by rw [hs];
