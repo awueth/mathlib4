@@ -1,4 +1,5 @@
 import Mathlib.Combinatorics.SimpleGraph.LapMatrix
+import Mathlib.Combinatorics.SimpleGraph.Cut
 import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.Algebra.Function.Indicator
 import Mathlib.Analysis.NormedSpace.Star.Matrix
@@ -26,13 +27,8 @@ section preliminaries
 
 def volume (s : Finset V) : ℕ := ∑ v in s, G.degree v
 
-/-
-def edge_boundary (s : Set V) : Set (V × V) := {(u, v) | (u ∈ s) ∧ v ∉ s ∧ G.Adj u v}
-
-def edge_boundary_v2 (s : Set V) : Set (SimpleGraph.edgeSet G) := Sym2.mk '' (edge_boundary G s)
--/
-
-def cut (s : Finset V) : ℕ := ∑ u in s, ∑ v in sᶜ, (if G.Adj u v then 1 else 0)
+theorem volume_compl (s : Finset V) : volume G sᶜ = volume G univ - volume G s := by
+  sorry
 
 noncomputable def conductance (s : Finset V) : NNReal := cut G s / min (volume G s) (volume G sᶜ)
 
@@ -67,7 +63,6 @@ noncomputable def gap (hc : G.Connected) : Module.End.Eigenvalues (Matrix.toLin'
   := (eigenvalues_pos G).min' (sorry)
 -/
 
-/- Why can the tuple be evaluated at -1? Why no proof of nonemptyness? -/
 noncomputable def gap : ℝ :=
   symm_matrix_eigenvalues_sorted G.isSymm_normalLapMatrix ⟨1, hV⟩
 
@@ -107,6 +102,7 @@ theorem matrixRayleighQuotient' (A : Matrix V V ℝ) (x : V → ℝ) :
     x ⬝ᵥ A *ᵥ x / ∑ i : V, x i ^ 2 := by
   rw [matrixRayleighQuotient]
   rfl
+
 /-
 theorem xLx (x : V → ℝ) : x ⬝ᵥ G.normalLapMatrix *ᵥ x = (∑ i : V, ∑ j : V,
     if G.Adj i j then (x i / Real.sqrt (G.degree i) - x j / Real.sqrt (G.degree j))^2 else 0) / 2 := by
@@ -188,12 +184,12 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
       cut G s * (volume G univ)^2 := by
     rw [D_sqrt, dotProduct_mulVec_lapMatrix G hd, g_aux]
     set L := G.lapMatrix ℝ
-    have h0 : L *ᵥ ↑(volume G s) = 0 := by sorry
-    have h0' : ↑(volume G s) ᵥ* L = 0 := by sorry
+    have h0 : L *ᵥ ↑(volume G s) = 0 := by
+      rw [← mul_one ((volume G s) : V → ℝ), ← nsmul_eq_mul, mulVec_smul, G.lapMatrix_mulVec_const_eq_zero, smul_zero]
+    have h0' : ↑(volume G s) ᵥ* L = 0 := by rw [← mulVec_transpose, G.isSymm_lapMatrix, h0]
     rw [mulVec_sub, h0, sub_zero, dotProduct_mulVec, sub_vecMul, h0', sub_zero, ← dotProduct_mulVec,
       ← nsmul_eq_mul, mulVec_smul, dotProduct_smul, smul_dotProduct]
-    have hc : Set.indicator (↑s) 1 ⬝ᵥ L *ᵥ Set.indicator (↑s) 1 = ↑(cut G s) := sorry -- this shoul be a theorem
-    simp_rw [hc, nsmul_eq_mul]
+    simp_rw [← cut_lapMatrix, nsmul_eq_mul]
     ring
   have h2 : ∑ i : V, (D_sqrt G *ᵥ g_aux G s) i ^ (2 : ℕ) =
       (volume G univ) * (volume G s) * (volume G sᶜ) := by
@@ -212,17 +208,16 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
       _ = ∑ x : V, ↑(d x) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ∑ x : V, ↑(d x) * ↑VS ^ 2 := by sorry
       _ = (∑ x : s, ↑(d x)) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) + (∑ x : V, ↑(d x)) * ↑VS ^ 2 := by sorry
       _ = ↑VG * ↑VS * (↑VG - ↑VS) := by sorry
-      _ = ↑VG * ↑VS * ↑VSC := sorry
+      _ = ↑VG * ↑VS * ↑VSC := by rw [hVSC, hVG, hVS, volume_compl]; sorry
   rw [h1, h2]
-  have h3 : ((volume G univ) : ℝ) / ↑(volume G univ) ≤ 1 := by apply div_self_le_one
   calc
     _ = ↑(cut G s) * ↑(volume G univ) * (↑(volume G univ) / ↑(volume G univ)) / (↑(volume G s) * ↑(volume G sᶜ)) := by ring
-    _ ≤ ↑(cut G s) * ↑(volume G univ) * (1 : ℝ) / (↑(volume G s) * ↑(volume G sᶜ)) := by sorry -- simp [div_self_le_one ((volume G univ) : ℝ)]
+    _ ≤ ↑(cut G s) * ↑(volume G univ) * (1 : ℝ) / (↑(volume G s) * ↑(volume G sᶜ)) := by rel [div_self_le_one ((volume G univ) : ℝ)]
     _ = ↑(cut G s) * ↑(volume G univ) / (↑(volume G s) * ↑(volume G sᶜ)) := by simp only [mul_one]
     _ ≤ ↑(cut G s) * ↑(volume G univ) / (max ↑(volume G s) ↑(volume G sᶜ) * min ↑(volume G s) ↑(volume G sᶜ)) := by rw [max_mul_min]
     _ = ↑(cut G s) * (↑(volume G univ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by ring
     _ ≤ ↑(cut G s) * (2 * max ↑(volume G s) ↑(volume G sᶜ) / max ↑(volume G s) ↑(volume G sᶜ)) / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry
-    _ ≤ ↑(cut G s) * 2 / (min ↑(volume G s) ↑(volume G sᶜ)) := by sorry
+    _ ≤ ↑(cut G s) * 2 / (min ↑(volume G s) ↑(volume G sᶜ)) := by gcongr; sorry
     _ = 2 * (↑(cut G s) / (min ↑(volume G s) ↑(volume G sᶜ))) := by ring
     _ = 2 * (conductance G s) := by simp [conductance]
     _ ≤ 2 * (minConductance G) := by rw [hs];

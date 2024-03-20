@@ -73,7 +73,7 @@ theorem lapMatrix_mulVec_apply [NonAssocRing α] (v : V) (vec : V → α) :
     (G.lapMatrix α).mulVec vec v = G.degree v * vec v - ∑ u in G.neighborFinset v, vec u := by
   simp_rw [lapMatrix, sub_mulVec, Pi.sub_apply, degMatrix_mulVec_apply, adjMatrix_mulVec_apply]
 
-theorem lapMatrix_mulVec_const_eq_zero [Ring α] : mulVec (G.lapMatrix α) (fun _ ↦ 1) = 0 := by
+theorem lapMatrix_mulVec_const_eq_zero [Ring α] : mulVec (G.lapMatrix α) 1 = 0 := by
   ext1 i
   rw [lapMatrix_mulVec_apply]
   simp
