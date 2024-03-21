@@ -36,7 +36,7 @@ theorem volume_compl (s : Finset V) : volume G sᶜ = volume G univ - volume G s
 
 theorem volume_monotone {s t : Finset V} (h : s ⊆ t) : volume G s ≤ volume G t := by
   unfold volume
-  sorry
+  exact sum_le_sum_of_subset h
 
 theorem volume_univ_le_max (s : Finset V) : volume G univ ≤ 2 * max (volume G s) (volume G sᶜ) := by
     cases max_cases (volume G s) (volume G sᶜ) with
