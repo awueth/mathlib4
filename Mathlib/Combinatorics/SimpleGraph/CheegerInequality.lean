@@ -221,24 +221,17 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
     ring
     apply volume_monotone; exact subset_univ s
   rw [h1, h2]
-  --rw [← ENat.coe_mul (volume G s) (volume G sᶜ)]
-  /-
-  have h3 : ((volume G univ) : ℝ) ≤ 2 * max ↑(volume G s) ↑(volume G sᶜ) := by
-    cases max_cases ((volume G s) : ℝ) ↑(volume G sᶜ) with
-    | inl h₁ => rw [h₁.1, ← volume_compl]
-    | inr h₂ => rw [h₂.1]
-    rw [volume_compl]
-  -/
   calc
     _ = ↑(cut G s) * ↑(volume G univ) * (↑(volume G univ) / ↑(volume G univ)) / (↑(volume G s) * ↑(volume G sᶜ)) := by ring
     _ ≤ ↑(cut G s) * ↑(volume G univ) * (1 : ℝ) / (↑(volume G s) * ↑(volume G sᶜ)) := by rel [div_self_le_one ((volume G univ) : ℝ)]
     _ = ↑(cut G s) * ↑(volume G univ) / (↑(volume G s) * ↑(volume G sᶜ)) := by simp only [mul_one]
-    _ = ↑(cut G s) * ↑(volume G univ) / ↑((volume G s) * (volume G sᶜ)) := by sorry --rw [← ENat.coe_mul]
+    _ = ↑(cut G s) * ↑(volume G univ) / ↑((volume G s) * (volume G sᶜ)) := by rw [Nat.cast_mul]
     _ ≤ ↑(cut G s) * ↑(volume G univ) / ↑(max (volume G s) (volume G sᶜ) * min (volume G s) (volume G sᶜ)) := by rw [max_mul_min]
-    _ = ↑(cut G s) * (↑(volume G univ) / ↑(max (volume G s) (volume G sᶜ))) / ↑(min (volume G s) (volume G sᶜ)) := by ring; sorry
+    _ = ↑(cut G s) * ↑(volume G univ) / (↑(max (volume G s) (volume G sᶜ)) * ↑(min (volume G s) (volume G sᶜ))) := by rw [Nat.cast_mul]
+    _ = ↑(cut G s) * (↑(volume G univ) / ↑(max (volume G s) (volume G sᶜ))) / ↑(min (volume G s) (volume G sᶜ)) := by ring;
     _ = ↑(cut G s) * ↑(volume G univ) * (1 / ↑(max (volume G s) (volume G sᶜ))) * (1 / ↑(min (volume G s) (volume G sᶜ))) := by ring
     _ ≤ ↑(cut G s) * ↑(2 * (max (volume G s) (volume G sᶜ))) * (1 / ↑(max (volume G s) (volume G sᶜ))) * (1 / ↑(min (volume G s) (volume G sᶜ))) := by gcongr; rel [volume_univ_le_max G s]
-    _ = ↑(cut G s) * 2 * (↑(max (volume G s) (volume G sᶜ)) / ↑(max (volume G s) (volume G sᶜ))) * (1 / (min ↑(volume G s) ↑(volume G sᶜ))) := by ring; sorry
+    _ = ↑(cut G s) * 2 * (↑(max (volume G s) (volume G sᶜ)) / ↑(max (volume G s) (volume G sᶜ))) * (1 / (min ↑(volume G s) ↑(volume G sᶜ))) := by rw [← Nat.cast_mul]; ring; sorry
     _ ≤ ↑(cut G s) * 2 * 1 * (1 / (min ↑(volume G s) ↑(volume G sᶜ))) := by rel [div_self_le_one ((↑(max (volume G s) (volume G sᶜ))) : ℝ)]
     _ = 2 * (↑(cut G s) / (min ↑(volume G s) ↑(volume G sᶜ))) := by ring
     _ = 2 * (conductance G s) := by simp [conductance]
