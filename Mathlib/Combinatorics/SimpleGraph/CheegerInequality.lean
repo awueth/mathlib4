@@ -201,19 +201,17 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
     simp [D_sqrt, mulVec_diagonal, mul_pow, g_aux, sub_sq]
     have hi : (v : V) → (Set.indicator s (1 : V → ℝ) v ^ 2 = Set.indicator s (1 : V → ℝ) v) := by
       simp [sq, Set.indicator_apply]
-    simp [hi]
-    set d := G.degree with hd
-    set χ := Set.indicator s (1 : V → ℝ) with hχ
-    set VG := volume G univ with hVG
-    set VS := volume G s with hVS
-    set VSC := volume G sᶜ with hVSC
-    calc
-      _ = ∑ x : V, ↑(d x) * ((↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ↑VS ^ 2) := by sorry
-      _ = ∑ x : V, (↑(d x) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ↑(d x) * ↑VS ^ 2) := by sorry
-      _ = ∑ x : V, ↑(d x) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) * χ x + ∑ x : V, ↑(d x) * ↑VS ^ 2 := by sorry
-      _ = (∑ x : s, ↑(d x)) * (↑VG ^ 2 - 2 * ↑VG * ↑VS) + (∑ x : V, ↑(d x)) * ↑VS ^ 2 := by sorry
-      _ = ↑VG * ↑VS * (↑VG - ↑VS) := by sorry
-      _ = ↑VG * ↑VS * ↑VSC := by rw [hVSC, hVG, hVS, volume_compl, Nat.cast_sub]; apply volume_monotone; exact subset_univ s
+    simp_rw [hi, mul_add, mul_sub, sum_add_distrib, sum_sub_distrib] --, ← sum_mul]
+    conv_lhs => arg 1; arg 1; arg 2; intro v; rw [← mul_assoc, mul_comm, ← mul_assoc]
+    conv_lhs => arg 1; arg 1; rw [← sum_mul]; tactic => simp [Set.indicator_apply]; rw [← Nat.cast_sum, ← volume]
+    conv_lhs => arg 1; arg 2; arg 2; intro v; rw [← mul_assoc]
+    conv_lhs => arg 1; arg 2; rw [← sum_mul];
+    conv_lhs => arg 1; arg 2; arg 1; arg 2; intro v; rw [← mul_comm, ← mul_assoc, mul_assoc]
+    conv_lhs => arg 1; arg 2; arg 1; rw [← mul_sum]; tactic => simp [Set.indicator_apply]; rw [← Nat.cast_sum, ← volume]
+    conv_lhs => arg 2; rw [← sum_mul, ← Nat.cast_sum, ← volume]
+    rw [volume_compl, Nat.cast_sub]
+    ring
+    apply volume_monotone; exact subset_univ s
   rw [h1, h2]
   calc
     _ = ↑(cut G s) * ↑(volume G univ) * (↑(volume G univ) / ↑(volume G univ)) / (↑(volume G s) * ↑(volume G sᶜ)) := by ring
