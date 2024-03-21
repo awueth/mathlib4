@@ -172,7 +172,7 @@ theorem gap_eq_inf_rayleigh :
   · sorry
 
 /- λ ≤ R(g) -/
-theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G) :
+theorem gap_le_rayleigh (s : Finset V):
   gap hV G ≤ (normalLapMatrixCLM G).rayleighQuotient (g_low G s) := by
   rw [gap_eq_inf_rayleigh hV G]
   apply csInf_le
@@ -186,8 +186,6 @@ theorem gap_le_rayleigh (s : Finset V) (hs : conductance G s = minConductance G)
     · apply sq_nonneg
   · apply Set.mem_image_of_mem -- g ⟂ D^(1/2) 1
     rw [sqrt_deg_perp, SetLike.mem_coe, Submodule.mem_orthogonal_singleton_iff_inner_right, g_low_orthogonal]
-
-example : ((volume G univ) : ℝ) / ↑(volume G univ) ≤ 1 := by apply div_self_le_one
 
 /- R(g) ≤ 2 * h -/ -- Remember this theorem: max_mul_min
 theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minConductance G) :
@@ -209,7 +207,7 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
     simp [D_sqrt, mulVec_diagonal, mul_pow, g_aux, sub_sq]
     have hi : (v : V) → (Set.indicator s (1 : V → ℝ) v ^ 2 = Set.indicator s (1 : V → ℝ) v) := by
       simp [sq, Set.indicator_apply]
-    simp_rw [hi, mul_add, mul_sub, sum_add_distrib, sum_sub_distrib] --, ← sum_mul]
+    simp_rw [hi, mul_add, mul_sub, sum_add_distrib, sum_sub_distrib]
     conv_lhs => arg 1; arg 1; arg 2; intro v; rw [← mul_assoc, mul_comm, ← mul_assoc]
     conv_lhs => arg 1; arg 1; rw [← sum_mul]; tactic => simp [Set.indicator_apply]; rw [← Nat.cast_sum, ← volume]
     conv_lhs => arg 1; arg 2; arg 2; intro v; rw [← mul_assoc]
@@ -243,7 +241,7 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
 theorem cheeger_ineq_easy : gap hV G ≤ 2 * (minConductance G : ℝ) := by
     obtain ⟨s, _, h⟩ := Finset.exists_mem_eq_inf' universe_powerSet_nonempty (conductance G)
     rw [← minConductance] at h
-    apply LE.le.trans (gap_le_rayleigh hV G s (Eq.symm h)) (rayleigh_le_minConductance G hd s (Eq.symm h))
+    apply LE.le.trans (gap_le_rayleigh hV G s) (rayleigh_le_minConductance G hd s (Eq.symm h))
 
 end easy_inequality
 
