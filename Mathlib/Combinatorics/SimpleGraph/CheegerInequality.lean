@@ -231,9 +231,11 @@ theorem rayleigh_le_minConductance (s : Finset V) (hs : conductance G s = minCon
     _ = ↑(cut G s) * (↑(volume G univ) / ↑(max (volume G s) (volume G sᶜ))) / ↑(min (volume G s) (volume G sᶜ)) := by ring;
     _ = ↑(cut G s) * ↑(volume G univ) * (1 / ↑(max (volume G s) (volume G sᶜ))) * (1 / ↑(min (volume G s) (volume G sᶜ))) := by ring
     _ ≤ ↑(cut G s) * ↑(2 * (max (volume G s) (volume G sᶜ))) * (1 / ↑(max (volume G s) (volume G sᶜ))) * (1 / ↑(min (volume G s) (volume G sᶜ))) := by gcongr; rel [volume_univ_le_max G s]
-    _ = ↑(cut G s) * 2 * (↑(max (volume G s) (volume G sᶜ)) / ↑(max (volume G s) (volume G sᶜ))) * (1 / (min ↑(volume G s) ↑(volume G sᶜ))) := by rw [← Nat.cast_mul]; ring; sorry
-    _ ≤ ↑(cut G s) * 2 * 1 * (1 / (min ↑(volume G s) ↑(volume G sᶜ))) := by rel [div_self_le_one ((↑(max (volume G s) (volume G sᶜ))) : ℝ)]
-    _ = 2 * (↑(cut G s) / (min ↑(volume G s) ↑(volume G sᶜ))) := by ring
+    _ = ↑(cut G s) * (2 * ↑(max (volume G s) (volume G sᶜ))) * (1 / ↑(max (volume G s) (volume G sᶜ))) * (1 / ↑(min (volume G s) (volume G sᶜ))) := by rw [Nat.cast_mul 2]; rfl
+    _ = ↑(cut G s) * 2 * (↑(max (volume G s) (volume G sᶜ)) * (1 / ↑(max (volume G s) (volume G sᶜ)))) * (1 / ↑(min (volume G s) (volume G sᶜ))) := by simp_rw [one_div, mul_assoc]
+    _ = ↑(cut G s) * 2 * (↑(max (volume G s) (volume G sᶜ)) / ↑(max (volume G s) (volume G sᶜ))) * (1 / ↑(min (volume G s) (volume G sᶜ))) := by rw [mul_div (↑(max (volume G s) (volume G sᶜ)) : ℝ), mul_one];
+    _ ≤ ↑(cut G s) * 2 * 1 * (1 / ↑(min (volume G s) (volume G sᶜ))) := by rel [div_self_le_one ((↑(max (volume G s) (volume G sᶜ))) : ℝ)]
+    _ = 2 * (↑(cut G s) / ↑(min (volume G s) (volume G sᶜ))) := by ring
     _ = 2 * (conductance G s) := by simp [conductance]
     _ ≤ 2 * (minConductance G) := by rw [hs];
 
