@@ -281,10 +281,10 @@ variable (hT : T.IsSymmetric) {n : ℕ} (hn : FiniteDimensional.finrank 𝕜 E =
 #check  eigenvectorBasis hT hn
 #check OrthonormalBasis.sum_repr (eigenvectorBasis hT hn)
 
-variable (v : E)
-#check diagonalization hT v
+#check ((eigenvectorBasis hT hn).repr).toEquiv
+#check Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (sorry)
 
-theorem my_thm (v : E) : ⟪T v, v⟫  =
+theorem my_thm (v : E) : ⟪T v, v⟫ =
     ∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(eigenvectorBasis hT hn).repr v i‖ ^ 2) := by
   rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) (T v)]
   conv_lhs => arg 2; rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) v]
@@ -294,6 +294,18 @@ theorem my_thm (v : E) : ⟪T v, v⟫  =
     conv_lhs => arg 2; intro i; rw [mul_assoc, IsROrC.conj_mul]
   · apply OrthonormalBasis.orthonormal
 
+theorem name_later :
+    (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
+    (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
+    (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(x : EuclideanSpace 𝕜 (Fin n)) i‖ ^ 2)) / ‖(x : EuclideanSpace 𝕜 (Fin n))‖ ^ 2) := by
+  apply Equiv.iInf_congr (Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (_))
+  · intro v
+    simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
+      AddEquivClass.map_eq_zero_iff, forall_const, Equiv.subtypeEquiv_apply]
+    rw [my_thm hT hn v, IsROrC.ofReal_re, LinearIsometryEquiv.norm_map]
+  · intro v
+    simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
+      AddEquivClass.map_eq_zero_iff]
 
 ----------------------------------------------------------------------------------------------------
 
