@@ -291,6 +291,15 @@ theorem my_thm (v : E) : ⟪T v, v⟫ =
     conv_lhs => arg 2; intro i; rw [mul_assoc, IsROrC.conj_mul]
   · apply OrthonormalBasis.orthonormal
 
+variable (h0 : 0 < n)
+
+#check (𝕜 ∙ (eigenvectorBasis hT hn ⟨0, _⟩))ᗮ
+#check  {j : Fin n | j ≠ ⟨0, h0⟩}
+
+theorem my_thm2 (v : (𝕜 ∙ (eigenvectorBasis_sorted hT hn ⟨0, h0⟩))ᗮ) :
+    ⟪T v, v⟫ = ∑ i : {j : Fin n | j ≠ ⟨0, h0⟩}, (eigenvalues_sorted hT hn i) * ↑(‖(eigenvectorBasis hT hn).repr v (Tuple.sort (eigenvalues hT hn) i)‖ ^ 2) := by
+  rw [my_thm hT hn v]
+
 theorem name_later :
     (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
     (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
@@ -304,15 +313,27 @@ theorem name_later :
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
       AddEquivClass.map_eq_zero_iff]
 
-theorem big_thm : eigenvalues_sorted hT hn ⟨0, sorry⟩ =
+theorem name_later2 :
+    (⨅ v : { v : E // v ≠ 0 ∧ ⟪v, eigenvectorBasis_sorted hT hn ⟨0, h0⟩⟫ = 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
+    (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 ∧ x (Tuple.sort (eigenvalues hT hn) ⟨0, h0⟩) = 0 },
+    (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(x : EuclideanSpace 𝕜 (Fin n)) i‖ ^ 2)) / ‖(x : EuclideanSpace 𝕜 (Fin n))‖ ^ 2) := by
+  apply Equiv.iInf_congr (Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (_))
+  · intro v
+    sorry
+  · intro v
+    simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
+      AddEquivClass.map_eq_zero_iff, and_congr_right_iff]
+    intro hv
+    simp [eigenvectorBasis_sorted]
+    sorry
+
+theorem big_thm : eigenvalues_sorted hT hn ⟨0, h0⟩ =
     (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) := by
   rw [name_later hT hn]
   conv_rhs => arg 1; intro x; rw [← Equiv.sum_comp (Tuple.sort (eigenvalues hT hn)) _]
   apply le_antisymm
   · sorry -- apply le_ciInf
   · sorry -- apply ciInf_le
-
-#check eigenvectorBasis hT hn ⟨0, sorry⟩
 
 ----------------------------------------------------------------------------------------------------
 
