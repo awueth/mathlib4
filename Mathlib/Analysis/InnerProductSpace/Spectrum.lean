@@ -217,9 +217,6 @@ noncomputable irreducible_def eigenvalues (i : Fin n) : ℝ :=
     hT.orthogonalFamily_eigenspaces').val
 #align linear_map.is_symmetric.eigenvalues LinearMap.IsSymmetric.eigenvalues
 
-noncomputable def eigenvalues_sorted (i : Fin n) : ℝ :=
-  (eigenvalues hT hn ∘ Tuple.sort (eigenvalues hT hn)) i
-
 theorem hasEigenvector_eigenvectorBasis (i : Fin n) :
     HasEigenvector T (hT.eigenvalues hn i) (hT.eigenvectorBasis hn i) := by
   let v : E := hT.eigenvectorBasis hn i
@@ -278,11 +275,8 @@ end Version2
 
 variable (hT : T.IsSymmetric) {n : ℕ} (hn : FiniteDimensional.finrank 𝕜 E = n)
 
-#check  eigenvectorBasis hT hn
-#check OrthonormalBasis.sum_repr (eigenvectorBasis hT hn)
-
-#check ((eigenvectorBasis hT hn).repr).toEquiv
-#check Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (sorry)
+noncomputable def eigenvalues_sorted (i : Fin n) : ℝ :=
+  (eigenvalues hT hn ∘ Tuple.sort (eigenvalues hT hn)) i
 
 theorem my_thm (v : E) : ⟪T v, v⟫ =
     ∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(eigenvectorBasis hT hn).repr v i‖ ^ 2) := by
@@ -306,6 +300,14 @@ theorem name_later :
   · intro v
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
       AddEquivClass.map_eq_zero_iff]
+
+theorem big_thm : eigenvalues_sorted hT hn ⟨0, sorry⟩ =
+    (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) := by
+  rw [name_later hT hn]
+  conv_rhs => arg 1; intro x; rw [← Equiv.sum_comp (Tuple.sort (eigenvalues hT hn)) _]
+  apply le_antisymm
+  · sorry -- apply le_ciInf
+  · sorry -- apply ciInf_le
 
 ----------------------------------------------------------------------------------------------------
 
