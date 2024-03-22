@@ -278,6 +278,9 @@ variable (hT : T.IsSymmetric) {n : ℕ} (hn : FiniteDimensional.finrank 𝕜 E =
 noncomputable def eigenvalues_sorted (i : Fin n) : ℝ :=
   (eigenvalues hT hn ∘ Tuple.sort (eigenvalues hT hn)) i
 
+noncomputable def eigenvectorBasis_sorted (i : Fin n) : E :=
+  eigenvectorBasis hT hn (Tuple.sort (eigenvalues hT hn) i)
+
 theorem my_thm (v : E) : ⟪T v, v⟫ =
     ∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(eigenvectorBasis hT hn).repr v i‖ ^ 2) := by
   rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) (T v)]
@@ -308,6 +311,8 @@ theorem big_thm : eigenvalues_sorted hT hn ⟨0, sorry⟩ =
   apply le_antisymm
   · sorry -- apply le_ciInf
   · sorry -- apply ciInf_le
+
+#check eigenvectorBasis hT hn ⟨0, sorry⟩
 
 ----------------------------------------------------------------------------------------------------
 
