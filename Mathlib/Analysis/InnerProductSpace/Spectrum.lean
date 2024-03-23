@@ -319,19 +319,36 @@ theorem big_thm : eigenvalues' hT hn ⟨0, h0⟩ =
 #check (eigenvectorBasis hT hn).repr _
 #check (eigenvectorBasis hT hn).repr.symm _
 
-variable {m : ℕ} (hm : m < n)
-
-instance : Coe (Fin m) (Fin n) where
-  coe i := ⟨i, by sorry⟩
-
-instance : Coe (EuclideanSpace 𝕜 (Fin m)) (EuclideanSpace 𝕜 (Fin n)) where
-  coe x := sorry
-
-noncomputable def my_equiv : (𝕜 ∙ (eigenvectorBasis' hT hn ⟨0, h0⟩))ᗮ ≃ EuclideanSpace 𝕜 (Fin (n-1)) :=
-  { toFun := fun v => (WithLp.equiv 2 (Fin (n-1) → 𝕜)).symm <| fun i => (eigenvectorBasis hT hn).repr v i,
-    invFun := fun x => ⟨(eigenvectorBasis hT hn).repr.symm x, by sorry⟩,
+variable {m : ℕ} (hm : m ≤ n)
+/-
+noncomputable def my_equiv (i : Fin n) :
+(𝕜 ∙ (eigenvectorBasis hT hn i))ᗮ ≃ EuclideanSpace 𝕜 (Fin (n-1)) :=
+  { toFun := (eigenvectorBasis hT hn).repr, -- remove i-th component
+    invFun := fun x => ⟨(eigenvectorBasis hT hn).repr.symm x, by sorry⟩, -- at x add 0 at i-th
     left_inv := sorry,
     right_inv := sorry }
+-/
+
+variable (i : Fin n)
+
+#check hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i)
+#check T.restrict (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))
+#check eigenspace_restrict_le_eigenspace T (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i)) (hT.eigenvalues hn i)
+
+noncomputable def T_rest :=
+  T.restrict (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))
+
+theorem rank_orth : FiniteDimensional.finrank 𝕜 (eigenspace T (eigenvalues hT hn i))ᗮ = n - 1 := by
+  sorry -- Submodule.finrank_add_finrank_orthogonal
+
+#check ((hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvectorBasis (rank_orth hT hn i)).repr
+
+noncomputable def the_equiv := (((hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvectorBasis (rank_orth hT hn i)).repr).toEquiv
+
+theorem name_later' :
+  (⨅ v : { v : (eigenspace T ↑(eigenvalues hT hn i))ᗮ // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
+  (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
+    (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖x.1 i‖ ^ 2)) / ‖x.1‖ ^ 2) := by sorry
 
 ----------------------------------------------------------------------------------------------------
 
