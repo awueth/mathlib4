@@ -343,12 +343,24 @@ theorem rank_orth : FiniteDimensional.finrank 𝕜 (eigenspace T (eigenvalues hT
 
 #check ((hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvectorBasis (rank_orth hT hn i)).repr
 
-noncomputable def the_equiv := (((hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvectorBasis (rank_orth hT hn i)).repr).toEquiv
+noncomputable def the_equiv :=
+  (((hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvectorBasis (rank_orth hT hn i)).repr).toEquiv
+
+noncomputable def T_rest_eigenvalues :=
+  (hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvalues (rank_orth hT hn i)
 
 theorem name_later' :
   (⨅ v : { v : (eigenspace T ↑(eigenvalues hT hn i))ᗮ // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
-  (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
-    (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖x.1 i‖ ^ 2)) / ‖x.1‖ ^ 2) := by sorry
+  (⨅ x : { x : EuclideanSpace 𝕜 (Fin (n-1)) // x ≠ 0 },
+    (∑ j : Fin (n-1), (T_rest_eigenvalues hT hn i j) * ↑(‖x.1 j‖ ^ 2)) / ‖x.1‖ ^ 2) := by
+  apply Equiv.iInf_congr (Equiv.subtypeEquiv (the_equiv hT hn i) (_))
+  · intro v
+    sorry
+  · intro v
+    simp only [ne_eq, the_equiv, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
+      AddEquivClass.map_eq_zero_iff]
+
+-- Could also directly use LinearMap.IsSymmetric.hasEigenvalue_iInf_of_finiteDimensional
 
 ----------------------------------------------------------------------------------------------------
 
