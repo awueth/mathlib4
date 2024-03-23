@@ -275,10 +275,10 @@ end Version2
 
 variable (hT : T.IsSymmetric) {n : ℕ} (hn : FiniteDimensional.finrank 𝕜 E = n)
 
-noncomputable def eigenvalues_sorted (i : Fin n) : ℝ :=
+noncomputable def eigenvalues' (i : Fin n) : ℝ :=
   (eigenvalues hT hn ∘ Tuple.sort (eigenvalues hT hn)) i
 
-noncomputable def eigenvectorBasis_sorted (i : Fin n) : E :=
+noncomputable def eigenvectorBasis' (i : Fin n) : E :=
   eigenvectorBasis hT hn (Tuple.sort (eigenvalues hT hn) i)
 
 theorem my_thm (v : E) : ⟪T v, v⟫ =
@@ -293,17 +293,9 @@ theorem my_thm (v : E) : ⟪T v, v⟫ =
 
 variable (h0 : 0 < n)
 
-#check (𝕜 ∙ (eigenvectorBasis hT hn ⟨0, _⟩))ᗮ
-#check  {j : Fin n | j ≠ ⟨0, h0⟩}
-
-theorem my_thm2 (v : (𝕜 ∙ (eigenvectorBasis_sorted hT hn ⟨0, h0⟩))ᗮ) :
-    ⟪T v, v⟫ = ∑ i : {j : Fin n | j ≠ ⟨0, h0⟩}, (eigenvalues_sorted hT hn i) * ↑(‖(eigenvectorBasis hT hn).repr v (Tuple.sort (eigenvalues hT hn) i)‖ ^ 2) := by
-  rw [my_thm hT hn v]
-
-theorem name_later :
-    (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
-    (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
-    (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(x : EuclideanSpace 𝕜 (Fin n)) i‖ ^ 2)) / ‖(x : EuclideanSpace 𝕜 (Fin n))‖ ^ 2) := by
+theorem name_later : (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
+  (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
+    (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖x.1 i‖ ^ 2)) / ‖x.1‖ ^ 2) := by
   apply Equiv.iInf_congr (Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (_))
   · intro v
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
@@ -313,27 +305,33 @@ theorem name_later :
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
       AddEquivClass.map_eq_zero_iff]
 
-theorem name_later2 :
-    (⨅ v : { v : E // v ≠ 0 ∧ ⟪v, eigenvectorBasis_sorted hT hn ⟨0, h0⟩⟫ = 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
-    (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 ∧ x (Tuple.sort (eigenvalues hT hn) ⟨0, h0⟩) = 0 },
-    (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(x : EuclideanSpace 𝕜 (Fin n)) i‖ ^ 2)) / ‖(x : EuclideanSpace 𝕜 (Fin n))‖ ^ 2) := by
-  apply Equiv.iInf_congr (Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (_))
-  · intro v
-    sorry
-  · intro v
-    simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
-      AddEquivClass.map_eq_zero_iff, and_congr_right_iff]
-    intro hv
-    simp [eigenvectorBasis_sorted]
-    sorry
-
-theorem big_thm : eigenvalues_sorted hT hn ⟨0, h0⟩ =
+theorem big_thm : eigenvalues' hT hn ⟨0, h0⟩ =
     (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) := by
   rw [name_later hT hn]
   conv_rhs => arg 1; intro x; rw [← Equiv.sum_comp (Tuple.sort (eigenvalues hT hn)) _]
   apply le_antisymm
   · sorry -- apply le_ciInf
   · sorry -- apply ciInf_le
+
+----------------------------------------------------------------------------------------------------
+
+#check (𝕜 ∙ (eigenvectorBasis' hT hn ⟨0, h0⟩))ᗮ
+#check (eigenvectorBasis hT hn).repr _
+#check (eigenvectorBasis hT hn).repr.symm _
+
+variable {m : ℕ} (hm : m < n)
+
+instance : Coe (Fin m) (Fin n) where
+  coe i := ⟨i, by sorry⟩
+
+instance : Coe (EuclideanSpace 𝕜 (Fin m)) (EuclideanSpace 𝕜 (Fin n)) where
+  coe x := sorry
+
+noncomputable def my_equiv : (𝕜 ∙ (eigenvectorBasis' hT hn ⟨0, h0⟩))ᗮ ≃ EuclideanSpace 𝕜 (Fin (n-1)) :=
+  { toFun := fun v => (WithLp.equiv 2 (Fin (n-1) → 𝕜)).symm <| fun i => (eigenvectorBasis hT hn).repr v i,
+    invFun := fun x => ⟨(eigenvectorBasis hT hn).repr.symm x, by sorry⟩,
+    left_inv := sorry,
+    right_inv := sorry }
 
 ----------------------------------------------------------------------------------------------------
 
