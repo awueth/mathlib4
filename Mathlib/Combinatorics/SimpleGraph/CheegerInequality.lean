@@ -1,6 +1,6 @@
 import Mathlib.Combinatorics.SimpleGraph.LapMatrix
 import Mathlib.Combinatorics.SimpleGraph.Cut
-import Mathlib.Combinatorics.CheegerUtils
+import Mathlib.Combinatorics.SimpleGraph.CheegerUtils
 import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.Algebra.Function.Indicator
 import Mathlib.Analysis.NormedSpace.Star.Matrix
