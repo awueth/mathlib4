@@ -1,10 +1,10 @@
 import Mathlib.Combinatorics.SimpleGraph.LapMatrix
 import Mathlib.Combinatorics.SimpleGraph.Cut
+import Mathlib.Combinatorics.CheegerUtils
 import Mathlib.LinearAlgebra.Eigenspace.Basic
 import Mathlib.Algebra.Function.Indicator
 import Mathlib.Analysis.NormedSpace.Star.Matrix
 import Mathlib.Data.Fin.Tuple.Sort
-import Mathlib.Analysis.InnerProductSpace.CourantFischer
 import Mathlib.Data.FinEnum
 import Mathlib.Data.Matrix.Basic
 
