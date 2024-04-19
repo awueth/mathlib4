@@ -51,6 +51,8 @@ theorem universe_powerSet_nonempty : (Finset.powerset (Finset.univ : Finset V)).
 noncomputable def minConductance : NNReal := (Finset.powerset (Finset.univ : Finset V)).inf'
   (universe_powerSet_nonempty) (conductance G)
 
+-- noncomputable def minConductance' : NNReal := ⨅ s : Finset V, conductance G s
+
 noncomputable def eigenvalues_finset :
   Finset (Module.End.Eigenvalues (Matrix.toLin' G.normalLapMatrix)) := Finset.univ
 
@@ -253,20 +255,32 @@ variable [FinEnum V]
 
 def vertex_tuple : Fin (FinEnum.card V) → V := (@FinEnum.equiv V).invFun
 
+/- maps i to the vertex that takes the i-th largest value when mapped by f -/
 noncomputable def vertex_tuple_sorted (f : V → ℝ) : Fin (FinEnum.card V) → V :=
   vertex_tuple ∘ Tuple.sort (f ∘ vertex_tuple)
 
 noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
   ((vertex_tuple_sorted f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
 
+/- α_G = min_i h_(S_i) -/
 noncomputable def min_sweep_conductance (f : V → ℝ) : NNReal :=
-  {sweep f i | i : Fin (FinEnum.card V)}.toFinset.inf' (sorry) (conductance G)
+  {sweep f i | i : Fin (FinEnum.card V)}.toFinset.inf' (by rw [Set.toFinset_nonempty, ← Set.range, Set.range_nonempty_iff_nonempty, ← Fin.pos_iff_nonempty]; sorry) (conductance G)
+
+/-
+noncomputable def min_sweep_conductance (f : V → ℝ) : NNReal :=
+  ⨅ i : Fin (FinEnum.card V), conductance G (sweep f i)
+-/
 
 /- h_G ≤ α_G -/
 theorem my_ineq1 (f : V → ℝ) : minConductance G ≤ (min_sweep_conductance G f) := by
-  simp [minConductance, min_sweep_conductance]
+  simp only [minConductance._eq_1, powerset_univ, min_sweep_conductance, Set.mem_setOf_eq,
+    le_inf'_iff, inf'_le_iff, mem_univ, true_and]
   intro s _
   use s
+
+#check {i : Fin (FinEnum.card V) | volume G (sweep _ i) ≤ (volume G univ) / 2}.toFinset.max
+
+noncomputable def r (f : V → ℝ) : Fin (FinEnum.card V) := {i : Fin (FinEnum.card V) | volume G (sweep f i) ≤ (volume G univ) / 2}.toFinset.max' (sorry)
 
 /- α² / 2 ≤ λ, long chain of inequalities -/
 theorem my_ineq2 {f : V → ℝ}
@@ -289,3 +303,5 @@ theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap hV G := by
   calc
     (minConductance G)^2 / 2 ≤ (min_sweep_conductance G f : ℝ)^2 / 2 := h
     _ ≤ ↑(gap hV G) := by exact my_ineq2 hV G hf
+
+end hard_inequality
