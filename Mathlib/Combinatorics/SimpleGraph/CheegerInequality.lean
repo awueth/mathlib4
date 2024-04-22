@@ -7,6 +7,7 @@ import Mathlib.Analysis.NormedSpace.Star.Matrix
 import Mathlib.Data.Fin.Tuple.Sort
 import Mathlib.Data.FinEnum
 import Mathlib.Data.Matrix.Basic
+import Mathlib.Algebra.Order.Group.PosPart
 
 
 open BigOperators Finset Matrix
@@ -281,6 +282,10 @@ theorem my_ineq1 (f : V → ℝ) : minConductance G ≤ (min_sweep_conductance G
 #check {i : Fin (FinEnum.card V) | volume G (sweep _ i) ≤ (volume G univ) / 2}.toFinset.max
 
 noncomputable def r (f : V → ℝ) : Fin (FinEnum.card V) := {i : Fin (FinEnum.card V) | volume G (sweep f i) ≤ (volume G univ) / 2}.toFinset.max' (sorry)
+
+noncomputable def v_r (f : V → ℝ) : V := vertex_tuple_sorted f (r G f)
+
+noncomputable def foo (f : V → ℝ) : V → ℝ := posPart (fun v => f v - f (v_r G f))
 
 /- α² / 2 ≤ λ, long chain of inequalities -/
 theorem my_ineq2 {f : V → ℝ}
