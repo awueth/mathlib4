@@ -254,14 +254,14 @@ section hard_inequality
 
 variable [FinEnum V]
 
-def vertex_tuple : Fin (FinEnum.card V) → V := (@FinEnum.equiv V).invFun
+-- def vertex_tuple : Fin (FinEnum.card V) → V := (@FinEnum.equiv V).invFun
 
 /- maps i to the vertex that takes the i-th largest value when mapped by f -/
-noncomputable def vertex_tuple_sorted (f : V → ℝ) : Fin (FinEnum.card V) → V :=
-  vertex_tuple ∘ Tuple.sort (f ∘ vertex_tuple)
+noncomputable def V_tuple (f : V → ℝ) : Fin (FinEnum.card V) → V :=
+  (@FinEnum.equiv V).invFun ∘ Tuple.sort (f ∘ (@FinEnum.equiv V).invFun)
 
 noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
-  ((vertex_tuple_sorted f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
+  ((V_tuple f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
 
 /- α_G = min_i h_(S_i) -/
 noncomputable def min_sweep_conductance (f : V → ℝ) : NNReal :=
@@ -283,14 +283,32 @@ theorem my_ineq1 (f : V → ℝ) : minConductance G ≤ (min_sweep_conductance G
 
 noncomputable def r (f : V → ℝ) : Fin (FinEnum.card V) := {i : Fin (FinEnum.card V) | volume G (sweep f i) ≤ (volume G univ) / 2}.toFinset.max' (sorry)
 
-noncomputable def v_r (f : V → ℝ) : V := vertex_tuple_sorted f (r G f)
+noncomputable def v_r (f : V → ℝ) : V := V_tuple f (r G f)
 
 noncomputable def foo (f : V → ℝ) : V → ℝ := posPart (fun v => f v - f (v_r G f))
 
+noncomputable def foo' (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := foo G f ∘ V_tuple f
+
 /- α² / 2 ≤ λ, long chain of inequalities -/
 theorem my_ineq2 {f : V → ℝ}
-  (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) f) :
-  (min_sweep_conductance G f : ℝ)^2 / 2 ≤ gap hV G := sorry
+    (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) f) :
+    (min_sweep_conductance G f : ℝ)^2 / 2 ≤ gap hV G := by
+  let α := (min_sweep_conductance G f : ℝ)
+  let fp := foo' G f
+  let d := fun i => G.degree (V_tuple f i)
+
+  have h_numerator :
+      α * (∑ i, (fp i) ^ 2 * d i) / (∑ i, (fp i) ^ 2 * d i)
+      ≤ ∑ i, ∑ j, if i < j ∧ G.Adj (V_tuple f i) (V_tuple f j) then (fp i - fp j)^2 else 0 := by
+    calc
+      _ ≤ ∑ i, ∑ j, if i < j ∧ G.Adj (V_tuple f i) (V_tuple f j) then (fp i ^ 2 - fp j ^ 2) else 0 := sorry
+      _ ≤ ∑ i, ∑ j, if i < j ∧ G.Adj (V_tuple f i) (V_tuple f j) then (fp i - fp j)^2 else 0 := sorry
+
+  calc
+    _ = α / 2 * (∑ i, (fp i) ^ 2 * d i) / (∑ i, (fp i) ^ 2 * d i) := sorry
+    -- _ ≤ ∑ i : Fin (FinEnum.card V - 1), (fp (Fin.castLE (sorry) i) ^ 2 - fp (i+1) ^ 2) := sorry
+    _ ≤ ∑ i, ∑ j, if i < j ∧ G.Adj (V_tuple f i) (V_tuple f j) then (fp i ^ 2 - fp j ^ 2) else 0 := sorry
+    _ ≤ gap hV G := sorry
 
 /- h_G²/2 ≤ α²/2 ≤ λ -/
 theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap hV G := by
