@@ -317,8 +317,12 @@ theorem my_ineq2 {f : V → ℝ}
     (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) f) :
     (minSweepConductance G f : ℝ)^2 / 2 ≤ gap hV G := by
   cases part1 hV G hf
-  · sorry
-  · sorry
+  · calc
+      _ ≤ R G (shift_pos G f) := part2_pos G
+      _ ≤ gap hV G := by assumption
+  · calc
+      _ ≤ R G (shift_neg G f) := part2_neg G
+      _ ≤ gap hV G := by assumption
 
 
 /- h_G²/2 ≤ α²/2 ≤ λ -/
