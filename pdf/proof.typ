@@ -25,7 +25,7 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> 
 ]
 #proof[
   $
-    alpha_G^2 / 2 
+    alpha_G^2 / 2
     &= alpha_G^2 / 2 (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 / (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 \
     &<= alpha_G^2 / 2 (sum_(i=1)^n f_+(i)^2 abs(tilde("vol")(S_i) - tilde("vol")(S_(i-1))))^2 / (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 & #text[@degree_le] \
     &= alpha_G^2 / 2 (sum_(i=1)^(n-1) (f_+(i)^2 - f_+(i+1)^2) tilde("vol")(S_i))^2 / (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 & #text[@sum_by_parts] \
@@ -68,11 +68,11 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> 
   $ alpha_G op(tilde("vol"))(S_i) <= abs(partial(S_i)) $
 ]<alpha_mul_vol_le_cut>
 #proof[
-  $ 
+  $
     min_j abs(partial(S_j)) / min{"vol"(S_(j)), "vol"(S_(j)^c)} dot min{"vol"(S_(i)), "vol"(S_(i)^c)} \
-    <= abs(partial(S_i)) / min{"vol"(S_(i)), "vol"(S_(i)^c)} dot min{"vol"(S_(i)), "vol"(S_(i)^c)} 
+    <= abs(partial(S_i)) / min{"vol"(S_(i)), "vol"(S_(i)^c)} dot min{"vol"(S_(i)), "vol"(S_(i)^c)}
     = abs(partial(S_i)).
-  
+
   $
 ]
 
@@ -84,22 +84,18 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> 
 ]
 
 #theorem[
-  $R(g_+) <= lambda_G$ or $R(g_-) <= lambda_G$
-]
-
-#theorem[
   $ (sum_(u tilde v) g_+(u)^2 - g_+(v)^2)^2 <= 2 (sum_(u tilde v) (g_+(u) + g_+(v))^2)(sum_(u tilde v) (g_+(u) - g_+(v))^2) $
 ]
 #proof[
   Consider the matrices $X(i, j) = 1_(s(i) tilde s(j))(f_+(i) + f_+(j))$ and $Y(i, j) = 1_(s(i) tilde s(j), i<j)(f_+(i) - f+(j))$. Their Frobenius inner product is
-  $ 
+  $
     angle.l X, Y angle.r
     = sum_(i, j) X^T (i,j) Y(i, j) \
     = sum_(i, j) 1_(s(i) tilde s(j), i<j)(f_+(i) + f_+(v))(f_+(i) - f_+(j)) \
     = sum_(s(i) tilde s(j)) f_+(i)^2 - f_+(j)^2.
   $
   The norms of $X$ and $Y$ are
-  $ 
+  $
     norm(X)_F^2 = sum_(u, v) X(u, v)^2 = sum_(u, v) 1_(u tilde v) (g_+(u) + g_+(v))^2 = 2 sum_(u tilde v) (g_+(u) + g_+(v))^2, \
     norm(Y)_F^2 = sum_(u, v) Y(u, v)^2 = sum_(u, v) 1_(u tilde v, u<v) (g_+(u) - g_+(v))^2 = sum_(u tilde v) (g_+(u) - g_+(v))^2.
   $
@@ -153,10 +149,31 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> 
 ]
 #proof[
   $
-    sum_v g(v)^2 d_v 
+    sum_v g(v)^2 d_v
     &= min_c sum_v (g(v)^2 + c^2) d_v - 2c underbrace(sum_v g(v) d_v, 0) \
     &= min_c sum_v (g(v) - c)^2 d_v \
     &<= sum_v (g(v) - g(v_r))^2 d_v
   $
 ]
 
+#theorem[
+  $R(g_+) <= lambda_G$ or $R(g_-) <= lambda_G$
+]
+#proof[
+  $
+    lambda_G
+    &= (sum_(u tilde v) (g(u) - g(v))^2) / (sum_v g(v)^2 d_v) \
+    &>= (sum_(u tilde v) (g(u) - g(v))^2) / (sum_v g(v)^2 d_v) \
+  $
+
+  - Case $g(v_r) <= g(u)$ and $g(u) <= g(v_r)$ \
+    $g_+(u) - g_+(v) = g(u) - g(v_r)$ and $g_-(u) - g_-(v) = 0$ \
+    $(g_+(u) - g_+(v))^2 + (g_+(u) - g_+(v)) = (g(v) - g(v))^2$
+  - Case $g(v_r) > g(u)$ and $g(u) > g(v_r)$ \
+    $g_+(u) - g_+(v) = g(v) - g(v)$ and $g_-(u) - g_-(v) = 0$ \
+    $(g_+(u) - g_+(v))^2 + (g_+(u) - g_+(v)) = (g(v) - g(v))^2$
+  - Case $g(v_r) > g(u)$ and $g(u) <= g(v_r)$ \
+    TODO
+  - Case $g(v_r) <= g(u)$ and $g(u) > g(v_r)$ \
+    TODO
+]

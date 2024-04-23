@@ -286,26 +286,26 @@ theorem my_thm (v : E) : ⟪T v, v⟫ =
   conv_lhs => arg 2; rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) v]
   rw [Orthonormal.inner_sum]
   · simp only [eigenvectorBasis_apply_self_apply]
-    simp only [map_mul, IsROrC.conj_ofReal, IsROrC.ofReal_sum, IsROrC.ofReal_mul, IsROrC.ofReal_pow]
-    conv_lhs => arg 2; intro i; rw [mul_assoc, IsROrC.conj_mul]
+    simp only [map_mul, RCLike.conj_ofReal, RCLike.ofReal_sum, RCLike.ofReal_mul, RCLike.ofReal_pow]
+    conv_lhs => arg 2; intro i; rw [mul_assoc, RCLike.conj_mul]
   · apply OrthonormalBasis.orthonormal
 
 variable (h0 : 0 < n)
 
-theorem name_later : (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
+theorem name_later : (⨅ v : { v : E // v ≠ 0 }, RCLike.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
   (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
     (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖x.1 i‖ ^ 2)) / ‖x.1‖ ^ 2) := by
   apply Equiv.iInf_congr (Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (_))
   · intro v
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
       AddEquivClass.map_eq_zero_iff, forall_const, Equiv.subtypeEquiv_apply]
-    rw [my_thm hT hn v, IsROrC.ofReal_re, LinearIsometryEquiv.norm_map]
+    rw [my_thm hT hn v, RCLike.ofReal_re, LinearIsometryEquiv.norm_map]
   · intro v
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
       AddEquivClass.map_eq_zero_iff]
 
 theorem big_thm : eigenvalues' hT hn ⟨0, h0⟩ =
-    (⨅ v : { v : E // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) := by
+    (⨅ v : { v : E // v ≠ 0 }, RCLike.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) := by
   rw [name_later hT hn]
   conv_rhs => arg 1; intro x; rw [← Equiv.sum_comp (Tuple.sort (eigenvalues hT hn)) _]
   apply le_antisymm
@@ -349,7 +349,7 @@ noncomputable def T_rest_eigenvalues :=
   (hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvalues (rank_orth hT hn i)
 
 theorem name_later' :
-  (⨅ v : { v : (eigenspace T ↑(eigenvalues hT hn i))ᗮ // v ≠ 0 }, IsROrC.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
+  (⨅ v : { v : (eigenspace T ↑(eigenvalues hT hn i))ᗮ // v ≠ 0 }, RCLike.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
   (⨅ x : { x : EuclideanSpace 𝕜 (Fin (n-1)) // x ≠ 0 },
     (∑ j : Fin (n-1), (T_rest_eigenvalues hT hn i j) * ↑(‖x.1 j‖ ^ 2)) / ‖x.1‖ ^ 2) := by
   apply Equiv.iInf_congr (Equiv.subtypeEquiv (the_equiv hT hn i) (_))
