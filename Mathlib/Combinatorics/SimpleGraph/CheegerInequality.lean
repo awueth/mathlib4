@@ -301,6 +301,11 @@ noncomputable def shift_pos_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := 
 noncomputable def shift_neg_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := (shift_neg G f ∘ V_tuple f)
 
 
+theorem foo (u v : V) :
+    (shift_pos G g u - shift_pos G g v) ^ 2 + (shift_neg G g u - shift_neg G g v) ^ 2 <= (g u - g v) ^ 2 := by
+  unfold shift_pos shift_neg
+  rw [posPart_eq_ite]
+
 
 theorem part1 (hg : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) g) :
     R G (shift_pos G g) ≤ gap hV G ∨ R G (shift_neg G g) ≤ gap hV G := by
