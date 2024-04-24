@@ -264,6 +264,9 @@ variable {g : V → ℝ}
 noncomputable def V_tuple (f : V → ℝ) : Fin (FinEnum.card V) → V :=
   (@FinEnum.equiv V).invFun ∘ Tuple.sort (f ∘ (@FinEnum.equiv V).invFun)
 
+theorem asdf (f : V → ℝ) : f ⬝ᵥ G.normalLapMatrix *ᵥ f = ∑ i, ∑ j, if G.Adj (V_tuple f i ) (V_tuple f j) then f (V_tuple f i) else 0 := by
+  sorry
+
 noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
   ((V_tuple f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
 
@@ -300,54 +303,79 @@ noncomputable def shift_pos_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := 
 
 noncomputable def shift_neg_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := (shift_neg G f ∘ V_tuple f)
 
-
-theorem foo (u v : V) :
-    (shift_pos G g u - shift_pos G g v) ^ 2 + (shift_neg G g u - shift_neg G g v) ^ 2 <= (g u - g v) ^ 2 := by
-  unfold shift_pos shift_neg posPart negPart
-  simp only [Pi.sup_apply, Pi.zero_apply, Pi.neg_apply]
-  rw [← posPart, ← negPart, ← posPart, ← negPart]
-  rw [posPart_eq_ite, posPart_eq_ite, negPart_eq_ite, negPart_eq_ite]
-  simp_rw [shift, sub_nonneg, tsub_le_iff_right, zero_add, neg_sub]
+theorem foo_new (u v : V) (f : V → ℝ) :
+    (f⁺ u - f⁺ v) ^ 2 + (f⁻ u - f⁻ v) ^ 2 ≤ (f u - f v) ^ 2 := by
+  simp_rw [Pi.oneLePart_apply, Pi.leOnePart_apply, posPart_eq_ite, negPart_eq_ite]
   split_ifs with h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15
-  · simp only [sub_sub_sub_cancel_right, sub_sub_sub_cancel_left, add_le_iff_nonpos_right]
-    have hu : g u = g (v_r G g) := by rw [← LE.le.ge_iff_eq]; assumption; assumption
-    have hv : g v = g (v_r G g) := by rw [← LE.le.ge_iff_eq]; assumption; assumption
-    simp [hv, hu]
-  · simp only [sub_sub_sub_cancel_right, sub_zero, add_le_iff_nonpos_right]
-    have hu : g u = g (v_r G g) := by rw [← LE.le.ge_iff_eq]; assumption; assumption
-    simp [hu]
-  · simp only [sub_sub_sub_cancel_right, zero_sub, neg_sub, add_le_iff_nonpos_right]
-    have hv : g v = g (v_r G g) := by rw [← LE.le.ge_iff_eq]; assumption; assumption
-    simp [hv]
-  · simp only [sub_sub_sub_cancel_right, sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true,
-    zero_pow, add_zero, le_refl]
-  · simp only [sub_zero, sub_sub_sub_cancel_left]
+  · simp only [sub_neg_eq_add, add_le_iff_nonpos_right]
+    have hu : f u = 0 := by rw [← LE.le.ge_iff_eq]; assumption; assumption
+    have hv : f v = 0 := by rw [← LE.le.ge_iff_eq]; assumption; assumption
+    simp only [hu, neg_zero, hv, add_zero, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+      le_refl]
+  · simp only [sub_zero, even_two, Even.neg_pow, add_le_iff_nonpos_right]
+    have hu : f u = 0 := by rw [← LE.le.ge_iff_eq]; assumption; assumption
+    simp only [hu, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, le_refl]
+  · simp only [sub_neg_eq_add, zero_add, add_le_iff_nonpos_right]
+    have hv : f v = 0 := by rw [← LE.le.ge_iff_eq]; assumption; assumption
+    simp only [hv, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, le_refl]
+  · simp only [sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, add_zero,
+    le_refl]
+  · simp only [sub_zero, sub_neg_eq_add]
+    have hu : f u = 0 := by rw [← LE.le.ge_iff_eq]; assumption; assumption
+    simp only [hu, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, neg_zero, zero_add,
+      zero_sub, even_two, Even.neg_pow, le_refl]
+  · push_neg at *
+    apply lt_trans h7 at h2
+    apply lt_irrefl at h2
+    contradiction
+  · simp only [sub_zero, sub_neg_eq_add, zero_add]
+    push_neg at *
     sorry
-  · simp only [sub_zero]
+  · simp only [sub_zero, sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
+    add_zero]
+    push_neg at *
+    apply lt_trans h8 at h2
+    apply lt_irrefl at h2
+    contradiction
+  · simp only [zero_sub, even_two, Even.neg_pow, sub_neg_eq_add]
+    push_neg at *
+    have hv : f v = 0 := by rw [← LE.le.ge_iff_eq]; assumption; assumption
+    simp only [hv, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, add_zero, even_two,
+      Even.neg_pow, zero_add, sub_zero, le_refl]
+  · simp only [zero_sub, even_two, Even.neg_pow, sub_zero]
+    push_neg at *
     sorry
-  · simp only [sub_zero, zero_sub, neg_sub]
-    sorry
-  · simp
-    sorry
-  · simp
-    sorry
-  · simp
-    sorry
-  · simp
-    sorry
-  · simp
-    sorry
-  · simp
-    rw [sq_le_sq, abs_sub_comm]
-  · simp
-    sorry
-  · simp
-    sorry
-  · simp
-    apply sq_nonneg
-
-
-
+  · simp only [zero_sub, even_two, Even.neg_pow, sub_neg_eq_add, zero_add]
+    push_neg at *
+    apply lt_trans h10 at h1
+    apply lt_irrefl at h1
+    contradiction
+  · simp only [zero_sub, even_two, Even.neg_pow, sub_self, ne_eq, OfNat.ofNat_ne_zero,
+    not_false_eq_true, zero_pow, add_zero]
+    push_neg at *
+    apply lt_trans h10 at h1
+    apply lt_irrefl at h1
+    contradiction
+  · simp only [sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, sub_neg_eq_add,
+    zero_add]
+    rw [← sub_eq_neg_add, sq_le_sq, abs_sub_comm]
+  · simp only [sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, sub_zero,
+    even_two, Even.neg_pow, zero_add]
+    push_neg at *
+    apply lt_trans h14 at h9
+    apply lt_irrefl at h9
+    contradiction
+  · simp only [sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, sub_neg_eq_add,
+    zero_add]
+    push_neg at *
+    apply lt_trans h13 at h1
+    apply lt_irrefl at h1
+    contradiction
+  · simp only [sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow, add_zero]
+    push_neg at *
+    apply lt_trans h15 at h9
+    apply lt_irrefl at h9
+    contradiction
 
 theorem part1 (hg : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) g) :
     R G (shift_pos G g) ≤ gap hV G ∨ R G (shift_neg G g) ≤ gap hV G := by

@@ -18,7 +18,12 @@
 
 = Hard direction
 
-Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> V$ be a function such that $f := g compose s$ is monotonically decreasing. Let $S_i = {s(1),...,s(i)}$. Define $alpha_G = min_i h_S_i$. Let $r$ denote the largest integer such that $"vol"(S_r) <= "vol"(G) / 2$.
+Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
+- Let $s : {1,...,n} -> V$ be a function such that $g compose s$ is monotonically decreasing. Write $v_i$ for $s(i)$.
+- Let $S_i = {v_1,...,v_i}$.
+- Define $alpha_G = min_i h_S_i$.
+- Let $r$ denote the largest integer such that $"vol"(S_r) < "vol"(G) / 2$, or in other words $op("vol")(S_r) < op("vol")(S_r^c)$.
+- Define $f(i) := g(v_i) - g(v_r)$. Denote the positive and negative part of $f$ with $f_+$ and $f_-$ respectively.
 
 #theorem[
   $alpha_G^2 / 2 <= R(g_+)$
@@ -27,7 +32,7 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> 
   $
     alpha_G^2 / 2
     &= alpha_G^2 / 2 (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 / (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 \
-    &<= alpha_G^2 / 2 (sum_(i=1)^n f_+(i)^2 abs(tilde("vol")(S_i) - tilde("vol")(S_(i-1))))^2 / (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 & #text[@degree_le] \
+    &<= alpha_G^2 / 2 (sum_(i=1)^n f_+(i)^2 (op("vol")(S_i) - op("vol")(S_(i-1))))^2 / (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 & #text[@degree_le] \
     &= alpha_G^2 / 2 (sum_(i=1)^(n-1) (f_+(i)^2 - f_+(i+1)^2) tilde("vol")(S_i))^2 / (sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 & #text[@sum_by_parts] \
     &<= (sum_(i=1)^(n-1) (f_+(i)^2 - f_+(i+1)^2) abs(partial(S_i)))^2 / (2(sum_(i=1)^n f_+(i)^2 d_(s(i)))^2) & #text[@alpha_mul_vol_le_cut] \
     &<= (sum_(s(i) tilde s(j)) f_+(i)^2 - f_+(j)^2)^2 / (2sum_(i=1)^n f_+(i)^2 d_(s(i)))^2 \
@@ -48,7 +53,16 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> 
   - Case $"vol"(S_i) <= "vol"(S_i^c)$ and $"vol"(S_(i-1)) <= "vol"(S_(i-1)^c)$: TODO
   - Case $"vol"(S_i) >= "vol"(S_i^c)$ and $"vol"(S_(i-1)) >= "vol"(S_(i-1)^c)$: TODO
   - Case $"vol"(S_i) <= "vol"(S_i^c)$ and $"vol"(S_(i-1)) >= "vol"(S_(i-1)^c)$: This is a contradiction, \ indeed $(S_i) <= (S_i^c) <= (S_(i-1)^c) <= (S_(i-1))$
-  - Case $"vol"(S_i) >= "vol"(S_i^c)$ and $"vol"(S_(i-1)) <= "vol"(S_(i-1)^c)$: In this case we have $(S_(i-1)) <= (G)/2$ and therefore $(G) - 2 dot (S_(i-1)) - d_i >= (G) - 2 dot (G)/2 - d_i$
+  - Case $"vol"(S_i) >= "vol"(S_i^c)$ and $"vol"(S_(i-1)) <= "vol"(S_(i-1)^c)$: In this case we have $(S_(i-1)) <= (G)/2$ and therefore $(G) - 2 dot (S_(i-1)) - d_i >= (G) - 2 dot (G)/2 - d_i$.
+  $
+    op("vol")(S_i^c) - op("vol")(S_(i-1))
+    &= op("vol")(G) - op("vol")(S_i) - op("vol")(S_(i-1)) \
+    &= op("vol")(G) - op("vol")(S_(i-1)) - d_i - op("vol")(S_(i-1)) \
+    &= op("vol")(G) - 2 op("vol")(S_(i-1)) - d_i \
+    &>= op("vol")(G) - 2 (op("vol")(G))/2 - d_i \
+    &= -d_i.
+  $
+  wrong
 ]
 
 #theorem[
@@ -176,4 +190,14 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$. Let $s : {1,...,n} -> 
     TODO
   - Case $g(v_r) <= g(u)$ and $g(u) > g(v_r)$ \
     TODO
+]
+
+#theorem[
+  $ (f_+(x) - f_+(y))^2 + (f_-(x) - f_-(y))^2  <= (f(x) - f(y))^2 $
+]
+#proof[
+  - $f(x), f(y) <= 0$:
+    $ (f_+(x) - f_+(y))^2 + (f_-(x) - f_-(y))^2 = (f_-(x) - f_-(y))^2 = (f(x) - f(y))^2 $
+  - $f(x), f(y) >= 0$:
+    $ (f_+(x) - f_+(y))^2 + (f_-(x) - f_-(y))^2 = (f_+(x) - f_+(y))^2 = (f(x) - f(y))^2 $
 ]
