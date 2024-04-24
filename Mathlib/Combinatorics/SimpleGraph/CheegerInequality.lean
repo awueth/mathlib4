@@ -330,7 +330,12 @@ theorem foo_new (u v : V) (f : V → ℝ) :
     contradiction
   · simp only [sub_zero, sub_neg_eq_add, zero_add]
     push_neg at *
-    sorry
+    rw [sub_sq', add_comm, le_sub_self_iff]
+    apply mul_nonpos_of_nonneg_of_nonpos
+    · apply mul_nonneg
+      · apply Nat.ofNat_nonneg
+      · assumption
+    · assumption
   · simp only [sub_zero, sub_self, ne_eq, OfNat.ofNat_ne_zero, not_false_eq_true, zero_pow,
     add_zero]
     push_neg at *
@@ -344,7 +349,12 @@ theorem foo_new (u v : V) (f : V → ℝ) :
       Even.neg_pow, zero_add, sub_zero, le_refl]
   · simp only [zero_sub, even_two, Even.neg_pow, sub_zero]
     push_neg at *
-    sorry
+    rw [sub_sq', add_comm, le_sub_self_iff]
+    apply mul_nonpos_of_nonpos_of_nonneg
+    · apply mul_nonpos_of_nonneg_of_nonpos
+      · apply Nat.ofNat_nonneg
+      · assumption
+    · assumption
   · simp only [zero_sub, even_two, Even.neg_pow, sub_neg_eq_add, zero_add]
     push_neg at *
     apply lt_trans h10 at h1
