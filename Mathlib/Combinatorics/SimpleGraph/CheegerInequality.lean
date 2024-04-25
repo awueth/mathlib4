@@ -303,7 +303,7 @@ noncomputable def shift_pos_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := 
 
 noncomputable def shift_neg_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := (shift_neg G f ∘ V_tuple f)
 
-theorem foo_new (u v : V) (f : V → ℝ) :
+theorem posPart_sub_sq_add_negPart_sub_sq (u v : V) (f : V → ℝ) :
     (f⁺ u - f⁺ v) ^ 2 + (f⁻ u - f⁻ v) ^ 2 ≤ (f u - f v) ^ 2 := by
   simp_rw [Pi.oneLePart_apply, Pi.leOnePart_apply, posPart_eq_ite, negPart_eq_ite]
   split_ifs with h1 h2 h3 h4 h5 h6 h7 h8 h9 h10 h11 h12 h13 h14 h15
