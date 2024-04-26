@@ -52,7 +52,8 @@ noncomputable def eigenvalues' (i : Fin n) : ℝ :=
 noncomputable def eigenvectorBasis' (i : Fin n) : E :=
   eigenvectorBasis hT hn (Tuple.sort (eigenvalues hT hn) i)
 
-theorem my_thm (v : E) : ⟪T v, v⟫ =
+/- ⟪T v, v⟫ = ∑ᵢ λᵢ vᵢ² -/
+theorem applyInnerSelf_eq_sum (v : E) : ⟪T v, v⟫ =
     ∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖(eigenvectorBasis hT hn).repr v i‖ ^ 2) := by
   rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) (T v)]
   conv_lhs => arg 2; rw [← OrthonormalBasis.sum_repr (eigenvectorBasis hT hn) v]
@@ -64,21 +65,21 @@ theorem my_thm (v : E) : ⟪T v, v⟫ =
 
 variable (h0 : 0 < n)
 
-theorem name_later : (⨅ v : { v : E // v ≠ 0 }, RCLike.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
+theorem iInfRayleigh_eq_sum : (⨅ v : { v : E // v ≠ 0 }, RCLike.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
   (⨅ x : { x : EuclideanSpace 𝕜 (Fin n) // x ≠ 0 },
     (∑ i : Fin n, (eigenvalues hT hn i) * ↑(‖x.1 i‖ ^ 2)) / ‖x.1‖ ^ 2) := by
   apply Equiv.iInf_congr (Equiv.subtypeEquiv ((eigenvectorBasis hT hn).repr).toEquiv (_))
   · intro v
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
       AddEquivClass.map_eq_zero_iff, forall_const, Equiv.subtypeEquiv_apply]
-    rw [_root_.my_thm hT hn v, RCLike.ofReal_re, LinearIsometryEquiv.norm_map]
+    rw [_root_.applyInnerSelf_eq_sum hT hn v, RCLike.ofReal_re, LinearIsometryEquiv.norm_map]
   · intro v
     simp only [ne_eq, LinearEquiv.coe_toEquiv, LinearIsometryEquiv.coe_toLinearEquiv,
       AddEquivClass.map_eq_zero_iff]
 
-theorem big_thm : _root_.eigenvalues' hT hn ⟨0, h0⟩ =
+theorem firstEigenvalue_eq_iInfRayleigh : _root_.eigenvalues' hT hn ⟨0, h0⟩ =
     (⨅ v : { v : E // v ≠ 0 }, RCLike.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) := by
-  rw [_root_.name_later hT hn]
+  rw [_root_.iInfRayleigh_eq_sum hT hn]
   conv_rhs => arg 1; intro x; rw [← Equiv.sum_comp (Tuple.sort (eigenvalues hT hn)) _]
   apply le_antisymm
   · sorry -- apply le_ciInf
@@ -109,14 +110,19 @@ variable (i : Fin n)
 noncomputable def T_rest :=
   T.restrict (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))
 
-theorem rank_orth : FiniteDimensional.finrank 𝕜 (Module.End.eigenspace T (eigenvalues hT hn i))ᗮ = n - 1 := by
+/- WRONG. This only holds if the mulitplicity of the i-th eigenvaluee is one -/
+theorem rank_orth :
+    FiniteDimensional.finrank 𝕜 (Module.End.eigenspace T (eigenvalues hT hn i))ᗮ = n - 1 := by
   sorry -- Submodule.finrank_add_finrank_orthogonal
 
 #check ((hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvectorBasis (_root_.rank_orth hT hn i)).repr
 
+/- Equivalence between orthogonal complement of eigenspace of eigenvalue of symmetric linear map and
+ℝ^(n-1) -/
 noncomputable def the_equiv :=
   (((hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvectorBasis (_root_.rank_orth hT hn i)).repr).toEquiv
 
+/- Eigenvalues of T restricted to the orthogonal complement of the i-th eigenspace -/
 noncomputable def T_rest_eigenvalues :=
   (hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvalues (_root_.rank_orth hT hn i)
 

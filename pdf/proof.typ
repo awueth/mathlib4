@@ -71,6 +71,8 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
   Done.
 ]
 
+#pagebreak()
+
 #theorem[
   $alpha_G^2 / 2 <= R(g_+)$
 ]
@@ -90,6 +92,8 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
     &= R(g_+).
   $
 ]
+
+#pagebreak()
 
 /*
 #theorem[
@@ -185,11 +189,11 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
 ]<sum_f2_mul_deg>
 #proof[
   $
-    sum_(i tilde j) (g_+(i) + g_+(j))^2 \
-    <= sum_(i tilde j) g_+(i)^2 + g_+(j)^2 \
-    = sum_(i tilde j) g_+(i)^2 + sum_(i tilde j) g_+(j)^2 \
-    = 2 sum_(i tilde j) g_+(i)^2 \
-    = 2 dot 1/2 sum_i g_+(i)^2 sum_j 1_(i tilde j) \
-    = sum_i g_+(i)^2 d_i.
+    sum_(i tilde j) (g_+(i) + g_+(j))^2
+    &<= sum_(i tilde j) g_+(i)^2 + g_+(j)^2 \
+    &= sum_(i tilde j) g_+(i)^2 + sum_(i tilde j) g_+(j)^2 \
+    &= 2 sum_(i tilde j) g_+(i)^2 \
+    &= 2 dot 1/2 sum_i g_+(i)^2 sum_j 1_(i tilde j)
+    &= sum_i g_+(i)^2 d_i.
   $
 ]
