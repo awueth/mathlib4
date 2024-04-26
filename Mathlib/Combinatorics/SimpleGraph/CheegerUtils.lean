@@ -101,6 +101,8 @@ noncomputable def my_equiv (i : Fin n) :
     right_inv := sorry }
 -/
 
+-- REMINDER: working with eigenspaces is probably not what we want.
+
 variable (i : Fin n)
 
 #check hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i)
@@ -126,7 +128,7 @@ noncomputable def the_equiv :=
 noncomputable def T_rest_eigenvalues :=
   (hT.restrict_invariant (hT.invariant_orthogonalComplement_eigenspace (hT.eigenvalues hn i))).eigenvalues (_root_.rank_orth hT hn i)
 
-theorem name_later' :
+theorem name_later :
   (⨅ v : { v : (Module.End.eigenspace T ↑(eigenvalues hT hn i))ᗮ // v ≠ 0 }, RCLike.re ⟪T v, v⟫ / ‖(v : E)‖ ^ 2 : ℝ) =
   (⨅ x : { x : EuclideanSpace 𝕜 (Fin (n-1)) // x ≠ 0 },
     (∑ j : Fin (n-1), (_root_.T_rest_eigenvalues hT hn i j) * ↑(‖x.1 j‖ ^ 2)) / ‖x.1‖ ^ 2) := by
