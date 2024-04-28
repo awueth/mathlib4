@@ -143,3 +143,18 @@ theorem name_later :
 
 ----------------------------------------------------------------------------------------------------
 end
+
+-- The assumptions are not the ones of the mediant inequality
+theorem mediant_left (a b c d : ℝ) (hc : 0 < c) (hd : 0 < d) (h : a / c ≤ b / d) :
+    (a + b) / (c + d) ≤ b / d := by
+  rw [div_le_div_iff (a := a + b) (b := c + d) (c := b) (d := d) (add_pos hc hd) hd]
+  rw [add_mul, mul_add, add_le_add_iff_right]
+  rw [div_le_div_iff hc hd] at h
+  exact h
+
+theorem mediant_right (a b c d : ℝ) (hc : 0 < c) (hd : 0 < d) (h : a / c ≤ b / d) :
+    a / c ≤ (a + b) / (c + d) := by
+  rw [div_le_div_iff (a := a) (b := c) (c := a + b) (d := c + d) hc (add_pos hc hd)]
+  rw [add_mul, mul_add, add_le_add_iff_left]
+  rw [div_le_div_iff hc hd] at h
+  exact h
