@@ -399,10 +399,9 @@ theorem sum_sq_deg_le (hg : ∑ v, g v * G.degree v = 0) :
   · apply sq_nonneg
   · apply Nat.cast_nonneg
 
-
-
 theorem part1 (hg : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) g) :
     R G (shift_pos G g) ≤ gap hV G ∨ R G (shift_neg G g) ≤ gap hV G := by
+  rw [← min_le_iff]
   sorry
 
 theorem part2_pos : (minSweepConductance G g : ℝ)^2 / 2 ≤ R G (shift_pos G g) := by
