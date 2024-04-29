@@ -387,6 +387,20 @@ theorem posPart_sub_sq_add_negPart_sub_sq (u v : V) (f : V → ℝ) :
     apply lt_irrefl at h9
     contradiction
 
+theorem sum_sq_deg_le (hg : ∑ v, g v * G.degree v = 0) :
+    ∑ v : V, g v ^ 2 * G.degree v ≤ ∑ v : V, (g v - g (v_r G g)) ^ 2 * G.degree v := by
+  simp only [sub_sq', right_distrib, sub_mul, sum_add_distrib, sum_sub_distrib, add_sub_assoc]
+  simp only [le_add_iff_nonneg_right, sub_nonneg]
+  conv_lhs => arg 2; intro v; rw [mul_comm (2 * g v), mul_assoc, mul_assoc]
+  rw [← mul_sum, ← mul_sum, hg, mul_zero, mul_zero]
+  apply sum_nonneg
+  intro v _
+  apply mul_nonneg
+  · apply sq_nonneg
+  · apply Nat.cast_nonneg
+
+
+
 theorem part1 (hg : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) g) :
     R G (shift_pos G g) ≤ gap hV G ∨ R G (shift_neg G g) ≤ gap hV G := by
   sorry
