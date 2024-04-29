@@ -158,3 +158,14 @@ theorem mediant_right (a b c d : ℝ) (hc : 0 < c) (hd : 0 < d) (h : a / c ≤ b
   rw [add_mul, mul_add, add_le_add_iff_left]
   rw [div_le_div_iff hc hd] at h
   exact h
+
+theorem min_le_mediant (a b c d : ℝ) (hc : 0 < c) (hd : 0 < d) :
+    min (a / c) (b / d) ≤ (a + b) / (c + d) := by
+  by_cases h : a / c ≤ b / d
+  · rw [min_eq_left h]
+    exact mediant_right a b c d hc hd h
+  · push_neg at h
+    apply le_of_lt at h
+    rw [min_eq_right h]
+    rw [add_comm a b, add_comm c d]
+    apply mediant_right b a d c hd hc h
