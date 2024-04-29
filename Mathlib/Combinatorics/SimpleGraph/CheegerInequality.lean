@@ -254,7 +254,10 @@ section hard_inequality
 
 variable [FinEnum V]
 
-noncomputable abbrev R (f : V → ℝ) : ℝ := f ⬝ᵥ G.normalLapMatrix *ᵥ f / (f ⬝ᵥ f)
+noncomputable abbrev R (f : V → ℝ) : ℝ := (∑ u, ∑ v, if G.Adj u v then (f u - f v) ^ 2 else 0) / (2 * ∑ v, f v^2 * G.degree v)
+
+noncomputable def gap' : ℝ :=
+  ⨅ f : {f : V → ℝ // ∑ v, f v = 0}, R G f
 
 variable {g : V → ℝ}
 
@@ -400,9 +403,21 @@ theorem sum_sq_deg_le (hg : ∑ v, g v * G.degree v = 0) :
   · apply Nat.cast_nonneg
 
 theorem part1 (hg : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) g) :
-    R G (shift_pos G g) ≤ gap hV G ∨ R G (shift_neg G g) ≤ gap hV G := by
-  rw [← min_le_iff]
+    R G (shift_pos G g) ≤ gap' G ∨ R G (shift_neg G g) ≤ gap' G := by
+  rw [← min_le_iff, R, R]
+  calc
+    _ ≤ ((∑ u : V, ∑ v : V, if G.Adj u v then (shift_pos G g u - shift_pos G g v) ^ 2 else 0) + (∑ u : V, ∑ v : V, if G.Adj u v then (shift_neg G g u - shift_neg G g v) ^ 2 else 0)) / (2 * ∑ v : V, shift_pos G g v ^ 2 * G.degree v + 2 * ∑ v : V, shift_neg G g v ^ 2 * G.degree v) := by apply min_le_mediant; sorry; sorry
+    _ = (∑ u : V, ∑ v : V, if G.Adj u v then (shift_pos G g u - shift_pos G g v) ^ 2 + (shift_neg G g u - shift_neg G g v) ^ 2 else 0) / (2 * ∑ v : V, (shift_pos G g v ^ 2 + shift_neg G g v ^ 2) * G.degree v) := sorry
+    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (shift G g u - shift G g v) ^ 2 else 0) / (2 * ∑ v : V, (shift_pos G g v ^ 2 + shift_neg G g v ^ 2) * G.degree v) := by apply div_le_div_of_nonneg_right (α := ℝ); rw [shift_pos, shift_neg]; gcongr; split_ifs; apply posPart_sub_sq_add_negPart_sub_sq; rfl; sorry
+    _ = (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, (shift_pos G g v ^ 2 + shift_neg G g v ^ 2) * G.degree v) := by congr; simp_rw [shift, sub_sub_sub_cancel_right]
+    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, (shift_pos G g v - shift_neg G g v) ^ 2 * G.degree v) := by gcongr; sorry; sorry
+    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, (shift G g v) ^ 2 * G.degree v) := by rw [shift_pos, shift_neg]; simp only [Pi.oneLePart_apply, Pi.leOnePart_apply, posPart_sub_negPart, le_refl]
+    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, g v ^ 2 * G.degree v) := by apply div_le_div_of_nonneg_left; sorry; sorry; rw [mul_le_mul_left]; unfold shift; apply sum_sq_deg_le; sorry; apply Nat.ofNat_pos
+    _ = R G g := by rw [R]
   sorry
+
+
+
 
 theorem part2_pos : (minSweepConductance G g : ℝ)^2 / 2 ≤ R G (shift_pos G g) := by
   sorry
@@ -413,18 +428,18 @@ theorem part2_neg : (minSweepConductance G g : ℝ)^2 / 2 ≤ R G (shift_neg G g
 /- α² / 2 ≤ λ, long chain of inequalities -/
 theorem my_ineq2 {f : V → ℝ}
     (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) f) :
-    (minSweepConductance G f : ℝ)^2 / 2 ≤ gap hV G := by
+    (minSweepConductance G f : ℝ)^2 / 2 ≤ gap' G := by
   cases part1 hV G hf
   · calc
       _ ≤ R G (shift_pos G f) := part2_pos G
-      _ ≤ gap hV G := by assumption
+      _ ≤ gap' G := by assumption
   · calc
       _ ≤ R G (shift_neg G f) := part2_neg G
-      _ ≤ gap hV G := by assumption
+      _ ≤ gap' G := by assumption
 
 
 /- h_G²/2 ≤ α²/2 ≤ λ -/
-theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap hV G := by
+theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap' G := by
   obtain ⟨f, hf⟩ := Module.End.HasEigenvalue.exists_hasEigenvector (gap_is_eig hV G) --(gap G hc).2
   have h : minConductance G^2 / 2 ≤ (minSweepConductance G f)^2 / 2 := by
     simp [NNReal.le_div_iff_mul_le]
@@ -438,6 +453,6 @@ theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap hV G := by
     · exact minConductance_le_minSweepConductance G f
   calc
     (minConductance G)^2 / 2 ≤ (minSweepConductance G f : ℝ)^2 / 2 := h
-    _ ≤ ↑(gap hV G) := by exact my_ineq2 hV G hf
+    _ ≤ ↑(gap' G) := by exact my_ineq2 hV G hf
 
 end hard_inequality
