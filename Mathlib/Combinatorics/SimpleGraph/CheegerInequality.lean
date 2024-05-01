@@ -267,11 +267,8 @@ variable {g : V → ℝ}
 noncomputable def V_tuple (f : V → ℝ) : Fin (FinEnum.card V) → V :=
   (@FinEnum.equiv V).invFun ∘ Tuple.sort (f ∘ (@FinEnum.equiv V).invFun)
 
-theorem asdf (f : V → ℝ) : f ⬝ᵥ G.normalLapMatrix *ᵥ f = ∑ i, ∑ j, if G.Adj (V_tuple f i ) (V_tuple f j) then f (V_tuple f i) else 0 := by
-  sorry
-
 noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
-  ((V_tuple f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
+  ((V_tuple f) '' {j : Fin (FinEnum.card V) | j ≤ i}).toFinset
 
 /- α_G = min_i h_(S_i) -/
 noncomputable def minSweepConductance (f : V → ℝ) : NNReal :=
@@ -400,31 +397,45 @@ theorem sum_sq_deg_le (hg : ∑ v, g v * G.degree v = 0) :
 
 #check ∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2
 
-theorem part1 (hg : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) g) :
+theorem part1 (hg : R G g = gap' G) :
     R G ((shift G g)⁺) ≤ gap' G ∨ R G ((shift G g)⁻) ≤ gap' G := by
   rw [← min_le_iff, R, R]
   calc
     _ ≤ ((∑ (u : V) (v : V) with G.Adj u v, ((shift G g)⁺ u - (shift G g)⁺ v) ^ 2) + (∑ (u : V) (v : V) with G.Adj u v, ((shift G g)⁻ u - (shift G g)⁻ v) ^ 2)) / (2 * ∑ v : V, (shift G g)⁺ v ^ 2 * G.degree v + 2 * ∑ v : V, (shift G g)⁻ v ^ 2 * G.degree v) := by apply min_le_mediant; sorry; sorry
     _ = (∑ (u : V) (v : V) with G.Adj u v, (((shift G g)⁺ u - (shift G g)⁺ v) ^ 2 + ((shift G g)⁻ u - (shift G g)⁻ v) ^ 2)) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := sorry
-    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (shift G g u - shift G g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := by apply div_le_div_of_nonneg_right (α := ℝ); gcongr; rw [← Pi.oneLePart_apply, ← Pi.leOnePart_apply]; apply posPart_sub_sq_add_negPart_sub_sq; sorry
+    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (shift G g u - shift G g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := by apply div_le_div_of_nonneg_right (α := ℝ); gcongr; rw [← Pi.oneLePart_apply, ← Pi.leOnePart_apply]; apply posPart_sub_sq_add_negPart_sub_sq; apply mul_nonneg; apply Nat.ofNat_nonneg; apply sum_nonneg; intro v _; apply mul_nonneg; apply add_nonneg; apply sq_nonneg; apply sq_nonneg; apply Nat.cast_nonneg
     _ = (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := by congr; simp_rw [shift, sub_sub_sub_cancel_right]
-    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v - (shift G g)⁻ v) ^ 2 * G.degree v) := by gcongr; sorry; sorry
+    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v - (shift G g)⁻ v) ^ 2 * G.degree v) := by gcongr; sorry; rw [sub_sq, add_le_add_iff_right, tsub_le_iff_right, le_add_iff_nonneg_right]; apply mul_nonneg; apply mul_nonneg; apply Nat.ofNat_nonneg; apply posPart_nonneg; apply negPart_nonneg
     _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, (shift G g v) ^ 2 * G.degree v) := by simp only [Pi.oneLePart_apply, Pi.leOnePart_apply, posPart_sub_negPart, le_refl]
     _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, g v ^ 2 * G.degree v) := by apply div_le_div_of_nonneg_left; sorry; sorry; rw [mul_le_mul_left]; unfold shift; apply sum_sq_deg_le; sorry; apply Nat.ofNat_pos
     _ = R G g := by rw [R]
+    _ ≤ gap' G := by rw [hg]
+
+lemma degree_eq (i : Fin (FinEnum.card V)) : (G.degree (V_tuple g i) : ℝ) = (volume G (sweep g i) : ℝ) - (volume G (sweep g (⟨i-1, sorry⟩)) : ℝ) := by
+  unfold volume
+  rw [Nat.cast_sum, Nat.cast_sum, ← Finset.sum_sdiff_eq_sub (by unfold sweep; simp only [Set.mem_setOf_eq, Set.toFinset_image]; apply image_subset_image; sorry)]
+  have hs : sweep g i \ sweep g ⟨i-1, sorry⟩ = {V_tuple g i} := by
+    sorry
+  rw [hs, Finset.sum_singleton]
+
+
+
+lemma thm_one_dot_six (f : V → ℝ) : ∑ i, shift_pos_i G f i = ∑ i with i < FinEnum.card V, shift_pos_i G f i := by
   sorry
 
 theorem part2_pos : (minSweepConductance G g : ℝ)^2 / 2 ≤ R G ((shift G g)⁺) := by
-  sorry
+  set α := minSweepConductance G g
+  calc
+    _ = (α^2 / 2) * (∑ i, shift_pos_i G g i ^ 2 * G.degree (V_tuple g i)) ^ 2 / (∑ i, shift_pos_i G g i ^ 2 * G.degree (V_tuple g i)) ^ 2 := by sorry
+    _ ≤ R G ((shift G g)⁺) := sorry
 
 theorem part2_neg : (minSweepConductance G g : ℝ)^2 / 2 ≤ R G ((shift G g)⁻) := by
   sorry
 
 /- α² / 2 ≤ λ, long chain of inequalities -/
-theorem my_ineq2 {f : V → ℝ}
-    (hf : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) f) :
+theorem my_ineq2 {f : V → ℝ} (hf : R G f = gap' G) :
     (minSweepConductance G f : ℝ)^2 / 2 ≤ gap' G := by
-  cases part1 hV G hf
+  cases part1 G hf
   · calc
       _ ≤ R G (shift G f)⁺ := part2_pos G
       _ ≤ gap' G := by assumption
@@ -436,6 +447,9 @@ theorem my_ineq2 {f : V → ℝ}
 /- h_G²/2 ≤ α²/2 ≤ λ -/
 theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap' G := by
   obtain ⟨f, hf⟩ := Module.End.HasEigenvalue.exists_hasEigenvector (gap_is_eig hV G) --(gap G hc).2
+
+  have hf' : R G f = gap' G := sorry
+
   have h : minConductance G^2 / 2 ≤ (minSweepConductance G f)^2 / 2 := by
     simp [NNReal.le_div_iff_mul_le]
     rw [← NNReal.coe_le_coe]
@@ -448,6 +462,6 @@ theorem cheeger_ineq_hard : (minConductance G : ℝ)^2 / 2 ≤ gap' G := by
     · exact minConductance_le_minSweepConductance G f
   calc
     (minConductance G)^2 / 2 ≤ (minSweepConductance G f : ℝ)^2 / 2 := h
-    _ ≤ ↑(gap' G) := by exact my_ineq2 hV G hf
+    _ ≤ ↑(gap' G) := by exact my_ineq2 G hf'
 
 end hard_inequality
