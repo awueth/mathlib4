@@ -254,7 +254,7 @@ section hard_inequality
 
 variable [FinEnum V]
 
-noncomputable abbrev R (f : V → ℝ) : ℝ := (∑ u, ∑ v, if G.Adj u v then (f u - f v) ^ 2 else 0) / (2 * ∑ v, f v^2 * G.degree v)
+noncomputable abbrev R (f : V → ℝ) : ℝ := (∑ (u : V) (v : V) with G.Adj u v, (f u - f v) ^ 2) / (2 * ∑ v, f v^2 * G.degree v)
 
 noncomputable def gap' : ℝ :=
   ⨅ f : {f : V → ℝ // ∑ v, f v = 0}, R G f
@@ -398,17 +398,19 @@ theorem sum_sq_deg_le (hg : ∑ v, g v * G.degree v = 0) :
   · apply sq_nonneg
   · apply Nat.cast_nonneg
 
+#check ∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2
+
 theorem part1 (hg : Module.End.HasEigenvector (Matrix.toLin' G.normalLapMatrix) (gap hV G) g) :
     R G ((shift G g)⁺) ≤ gap' G ∨ R G ((shift G g)⁻) ≤ gap' G := by
   rw [← min_le_iff, R, R]
   calc
-    _ ≤ ((∑ u : V, ∑ v : V, if G.Adj u v then ((shift G g)⁺ u - (shift G g)⁺ v) ^ 2 else 0) + (∑ u : V, ∑ v : V, if G.Adj u v then ((shift G g)⁻ u - (shift G g)⁻ v) ^ 2 else 0)) / (2 * ∑ v : V, (shift G g)⁺ v ^ 2 * G.degree v + 2 * ∑ v : V, (shift G g)⁻ v ^ 2 * G.degree v) := by apply min_le_mediant; sorry; sorry
-    _ = (∑ u : V, ∑ v : V, if G.Adj u v then ((shift G g)⁺ u - (shift G g)⁺ v) ^ 2 + ((shift G g)⁻ u - (shift G g)⁻ v) ^ 2 else 0) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := sorry
-    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (shift G g u - shift G g v) ^ 2 else 0) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := by apply div_le_div_of_nonneg_right (α := ℝ); gcongr; split_ifs; apply posPart_sub_sq_add_negPart_sub_sq; rfl; sorry
-    _ = (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := by congr; simp_rw [shift, sub_sub_sub_cancel_right]
-    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, ((shift G g)⁺ v - (shift G g)⁻ v) ^ 2 * G.degree v) := by gcongr; sorry; sorry
-    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, (shift G g v) ^ 2 * G.degree v) := by simp only [Pi.oneLePart_apply, Pi.leOnePart_apply, posPart_sub_negPart, le_refl]
-    _ ≤ (∑ u : V, ∑ v : V, if G.Adj u v then (g u - g v) ^ 2 else 0) / (2 * ∑ v : V, g v ^ 2 * G.degree v) := by apply div_le_div_of_nonneg_left; sorry; sorry; rw [mul_le_mul_left]; unfold shift; apply sum_sq_deg_le; sorry; apply Nat.ofNat_pos
+    _ ≤ ((∑ (u : V) (v : V) with G.Adj u v, ((shift G g)⁺ u - (shift G g)⁺ v) ^ 2) + (∑ (u : V) (v : V) with G.Adj u v, ((shift G g)⁻ u - (shift G g)⁻ v) ^ 2)) / (2 * ∑ v : V, (shift G g)⁺ v ^ 2 * G.degree v + 2 * ∑ v : V, (shift G g)⁻ v ^ 2 * G.degree v) := by apply min_le_mediant; sorry; sorry
+    _ = (∑ (u : V) (v : V) with G.Adj u v, (((shift G g)⁺ u - (shift G g)⁺ v) ^ 2 + ((shift G g)⁻ u - (shift G g)⁻ v) ^ 2)) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := sorry
+    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (shift G g u - shift G g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := by apply div_le_div_of_nonneg_right (α := ℝ); gcongr; rw [← Pi.oneLePart_apply, ← Pi.leOnePart_apply]; apply posPart_sub_sq_add_negPart_sub_sq; sorry
+    _ = (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v ^ 2 + (shift G g)⁻ v ^ 2) * G.degree v) := by congr; simp_rw [shift, sub_sub_sub_cancel_right]
+    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, ((shift G g)⁺ v - (shift G g)⁻ v) ^ 2 * G.degree v) := by gcongr; sorry; sorry
+    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, (shift G g v) ^ 2 * G.degree v) := by simp only [Pi.oneLePart_apply, Pi.leOnePart_apply, posPart_sub_negPart, le_refl]
+    _ ≤ (∑ (u : V) (v : V) with G.Adj u v, (g u - g v) ^ 2) / (2 * ∑ v : V, g v ^ 2 * G.degree v) := by apply div_le_div_of_nonneg_left; sorry; sorry; rw [mul_le_mul_left]; unfold shift; apply sum_sq_deg_le; sorry; apply Nat.ofNat_pos
     _ = R G g := by rw [R]
   sorry
 
