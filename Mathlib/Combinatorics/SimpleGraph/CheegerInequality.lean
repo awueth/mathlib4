@@ -252,7 +252,7 @@ end easy_inequality
 
 section hard_inequality
 
-variable [FinEnum V]
+variable [FinEnum V] [NeZero (FinEnum.card V)]
 
 noncomputable abbrev R (f : V → ℝ) : ℝ := (∑ (u : V) (v : V) with G.Adj u v, (f u - f v) ^ 2) / (2 * ∑ v, f v^2 * G.degree v)
 
@@ -268,7 +268,9 @@ noncomputable def V_tuple (f : V → ℝ) : Fin (FinEnum.card V) → V :=
   (@FinEnum.equiv V).invFun ∘ Tuple.sort (f ∘ (@FinEnum.equiv V).invFun)
 
 noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
-  ((V_tuple f) '' {j : Fin (FinEnum.card V) | j ≤ i}).toFinset
+  ((V_tuple f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
+
+#check fun i : Finset.range (FinEnum.card V) => sweep g i
 
 /- α_G = min_i h_(S_i) -/
 noncomputable def minSweepConductance (f : V → ℝ) : NNReal :=
