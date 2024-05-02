@@ -420,7 +420,7 @@ lemma degree_eq (i : Fin (FinEnum.card V)) : (G.degree (V_tuple g i) : ℝ) = (v
 
 
 
-lemma thm_one_dot_six (f : V → ℝ) : ∑ i, shift_pos_i G f i = ∑ i with i < FinEnum.card V, shift_pos_i G f i := by
+lemma thm_one_dot_six (f : V → ℝ) : ∑ i, shift_pos_i G f i = ∑ (i : Finset.range (FinEnum.card V)), shift_pos_i G f i := by
   sorry
 
 theorem part2_pos : (minSweepConductance G g : ℝ)^2 / 2 ≤ R G ((shift G g)⁺) := by
