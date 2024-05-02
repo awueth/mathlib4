@@ -19,8 +19,8 @@
 = Hard direction
 
 Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
-- Let $s : {1,...,n} -> V$ be a function such that $g compose s$ is monotonically decreasing. Write $v_i$ for $s(i)$ and $g(i)$ for $g(s(i))$.
-- Let $S_i = {v_1,...,v_i}$.
+- Let $s : {0,...,n-1} -> V$ be a function such that $g compose s$ is monotonically decreasing. Write $v_i$ for $s(i)$ and $g(i)$ for $g(s(i))$.
+- Let $S_i = {v_j | j < i}$.
 - Define $alpha_G = min_i h_S_i$.
 - Let $r$ denote the largest integer such that $"vol"(S_r) < "vol"(G) / 2$, or in other words $op("vol")(S_r) < op("vol")(S_r^c)$.
 - Define $f(v) := g(v) - g(v_r)$. Denote the positive and negative part of $f$ with $f_+$ and $f_-$ respectively.
@@ -79,14 +79,14 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
 #proof[
   $
     alpha_G^2 / 2
-    &= alpha_G^2 / 2 (sum_(i=1)^n f_+(i)^2 d_(i))^2 / (sum_(i=1)^n f_+(i)^2 d_(i))^2 \
-    &<= alpha_G^2 / 2 (sum_(i=1)^n f_+(i)^2 (op("vol")(S_i) - op("vol")(S_(i-1))))^2 / (sum_(i=1)^n f_+(i)^2 d_(i))^2 \
-    &= alpha_G^2 / 2 (sum_(i=1)^(n-1) (f_+(i)^2 - f_+(i+1)^2) op("vol")(S_i))^2 / (sum_(i=1)^n f_+(i)^2 d_(i))^2 & #text[@sum_by_parts] \
-    &= alpha_G^2 / 2 (sum_(i=1)^(n-1) (f_+(i)^2 - f_+(i+1)^2) min{op("vol")S_i, op("vol")S_i^c})^2 / (sum_(i=1)^n f_+(i)^2 d_(i))^2 & "since" op("vol")S_i^c <= op("vol")S_i => f_+(i) = 0. \
-    &<= (sum_(i=1)^(n-1) (f_+(i)^2 - f_+(i+1)^2) abs(partial(S_i)))^2 / (2(sum_(i=1)^n f_+(i)^2 d_(i))^2) & #text[@alpha_mul_vol_le_cut] \
-    &<= (sum_(i tilde j) f_+(i)^2 - f_+(j)^2)^2 / (2sum_(i=1)^n f_+(i)^2 d_(i))^2 & #text[@by_counting] \
-    &<= ((sum_(i tilde j) (f_+(i) + f_+(j))^2)(sum_(i tilde j) (f_+(i) - f_+(j))^2)) / (sum_(i=1)^n f_+(i)^2 d_(i))^2 & #text[@cauchy_schwarz] \
-    &<= ((sum_(i tilde j) (f_+(i) + f_+(j))^2)(sum_(i tilde j) (f_+(i) - f_+(j))^2)) / ((sum_(i=1)^n f_+(i)^2 d_(i))(sum_(i tilde j) (f_+(i) + f_+(j))^2)) & #text[@sum_f2_mul_deg] \
+    &= alpha_G^2 / 2 (sum_(0<=i<n) f_+(i)^2 d_(i))^2 / (sum_(0<=i<n) f_+(i)^2 d_(i))^2 \
+    /*&<= alpha_G^2 / 2 (sum_(0<=i<n) f_+(i)^2 (op("vol")(S_i) - op("vol")(S_(i-1))))^2 / (sum_(0<=i<n) f_+(i)^2 d_(i))^2 \*/
+    &= alpha_G^2 / 2 (sum_(0<=i<n-1) (f_+(i)^2 - f_+(i+1)^2) op("vol")(S_i))^2 / (sum_(0<=i<n) f_+(i)^2 d_(i))^2 & #text[@sum_by_parts] \
+    &= alpha_G^2 / 2 (sum_(0<=i<n-1) (f_+(i)^2 - f_+(i+1)^2) min{op("vol")S_i, op("vol")S_i^c})^2 / (sum_(0<=i<n) f_+(i)^2 d_(i))^2 & "since" op("vol")S_i^c <= op("vol")S_i => f_+(i) = 0. \
+    &<= (sum_(0<=i<n-1) (f_+(i)^2 - f_+(i+1)^2) abs(partial(S_i)))^2 / (2(sum_(0<=i<n) f_+(i)^2 d_(i))^2) & #text[@alpha_mul_vol_le_cut] \
+    &<= (sum_(i tilde j) f_+(i)^2 - f_+(j)^2)^2 / (2sum_(0<=i<n) f_+(i)^2 d_(i))^2 & #text[@by_counting] \
+    &<= ((sum_(i tilde j) (f_+(i) + f_+(j))^2)(sum_(i tilde j) (f_+(i) - f_+(j))^2)) / (sum_(0<=i<n) f_+(i)^2 d_(i))^2 & #text[@cauchy_schwarz] \
+    &<= ((sum_(i tilde j) (f_+(i) + f_+(j))^2)(sum_(i tilde j) (f_+(i) - f_+(j))^2)) / ((sum_(0<=i<n) f_+(i)^2 d_(i))(sum_(i tilde j) (f_+(i) + f_+(j))^2)) & #text[@sum_f2_mul_deg] \
     &= (sum_(i tilde j) (f_+(i) - f_+(j))^2) / (sum_(i=1)^n f_+(i)^2 d_(i)) \
     &= (sum_(u tilde v) (g_+(u) - g_+(v))^2) / (sum_(v) g_+(v)^2 d_(v)) \
     &= R(g_+).
@@ -117,6 +117,20 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
   wrong
 ]
 */
+
+#theorem[
+  $
+    sum_(0 <= i < n) f_+(i)^2 d_i = sum_(0<=i<n-1) (f_+(i)^2 - f_+(i+1)^2) op("vol")(S_i)
+  $
+]
+#proof[
+  Using https://leanprover-community.github.io/mathlib4_docs/Mathlib/Algebra/BigOperators/Module.html#Finset.sum_range_by_parts
+  $
+    sum_(0<= i<n) f_+(i)^2 d_i
+    &= cancel(f_+(n-1)^2) sum_(0<=i<n) d_i - sum_(0<=i<n-1) (f_+(i+1)^2 - f_+(i)^2) sum_(0 <= j < i) d_j \
+    &= sum_(0<=i<n-1) (f_+(i)^2 - f_+(i+1)^2) op("vol")(S_i)
+  $
+]
 
 #theorem[
   $ sum_(i=1)^n f_+(i)^2 (op("vol")(S_i) - op("vol")(S_(i-1))) = sum_(i=1)^(n-1) (f_+(i)^2 - f_+(i+1)^2) op("vol")(S_i)$.
@@ -154,7 +168,7 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
     sum_(i=1)^(n) (f_+(i)^2 - f_+(i+1)^2)partial(S_i)
     &= sum_(i=1)^(n) (f_+(i)^2 - f_+(i+1)^2)(sum_(j=(i+1))^n 1_(i tilde j)) \
     &= sum_(i=1)^(n-1)sum_(j=(i+1))^n (f_+(i)^2 - f_+(i+1)^2)1_(i tilde j) \
-    &<= sum_(i=1)^(n-1)sum_(j=(i+1))^n (f_+(i)^2 - f_+(j)^2)1_(i tilde j) & j > i => f_+(i)^2 - f_+(j)^2 >= 0 \
+    &<= sum_(i=1)^(n-1)sum_(j=(i+1))^n (f_+(i)^2 - f_+(j)^2)1_(i tilde j) & j > i => f_+(j)^2 <= f_+(i+1)^2 \
     &= sum_(i tilde j)(f_+(i)^2 - f_+(j)^2).
   $
 ]
@@ -163,7 +177,7 @@ Let $g : V -> RR$ be an eigenvector achieving $lambda_G$.
   $ (sum_(i tilde j) f_+(i)^2 - f_+(j)^2)^2 <= 2 (sum_(i tilde j) (f_+(i) + f_+(j))^2)(sum_(i tilde j) (f_+(i) - f_+(j))^2) $
 ]<cauchy_schwarz>
 #proof[
-  Consider the matrices $X(i, j) = 1_(i tilde j)(f_+(i) + f_+(j))$ and $Y(i, j) = 1_(i tilde j, i<j)(f_+(i) - f+(j))$. Their Frobenius inner product is
+  Consider the matrices $X(i, j) = 1_(i tilde j)(f_+(i) + f_+(j))$ and $Y(i, j) = 1_(i tilde j, i<j)(f_+(i) - f(j))$. Their Frobenius inner product is
   $
     angle.l X, Y angle.r
     = sum_(i, j) X^T (i,j) Y(i, j) \
