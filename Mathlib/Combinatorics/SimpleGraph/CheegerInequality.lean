@@ -254,12 +254,16 @@ section hard_inequality
 
 variable [FinEnum V] [NeZero (FinEnum.card V)]
 
-noncomputable abbrev R (f : V → ℝ) : ℝ := (∑ (u : V) (v : V) with G.Adj u v, (f u - f v) ^ 2) / (2 * ∑ v, f v^2 * G.degree v)
+noncomputable abbrev R (f : V → ℝ) : ℝ :=
+  (∑ (u : V) (v : V) with G.Adj u v, (f u - f v) ^ 2) / (2 * ∑ v, f v^2 * G.degree v)
 
 noncomputable def gap' : ℝ :=
   ⨅ f : {f : V → ℝ // ∑ v, f v = 0}, R G f
 
 variable {g : V → ℝ}
+
+set_option quotPrecheck false
+local notation "N" f => fun i : ℕ => if i < FinEnum.card V then f ((@FinEnum.equiv V).invFun i) else 0
 
 -- def vertex_tuple : Fin (FinEnum.card V) → V := (@FinEnum.equiv V).invFun
 
@@ -267,10 +271,8 @@ variable {g : V → ℝ}
 noncomputable def V_tuple (f : V → ℝ) : Fin (FinEnum.card V) → V :=
   (@FinEnum.equiv V).invFun ∘ Tuple.sort (f ∘ (@FinEnum.equiv V).invFun)
 
-noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) :=
-  ((V_tuple f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
-
-#check fun i : Finset.range (FinEnum.card V) => sweep g i
+noncomputable def sweep (f : V → ℝ) (i : Fin (FinEnum.card V)) := {V_tuple f j | j < i}.toFinset
+  --((V_tuple f) '' {j : Fin (FinEnum.card V) | j < i}).toFinset
 
 /- α_G = min_i h_(S_i) -/
 noncomputable def minSweepConductance (f : V → ℝ) : NNReal :=
@@ -289,17 +291,13 @@ theorem minConductance_le_minSweepConductance (f : V → ℝ) :
   intro s _
   use s
 
-#check {i : Fin (FinEnum.card V) | volume G (sweep _ i) ≤ (volume G univ) / 2}.toFinset.max
-
 noncomputable def r (f : V → ℝ) : Fin (FinEnum.card V) := {i : Fin (FinEnum.card V) | volume G (sweep f i) ≤ (volume G univ) / 2}.toFinset.max' (sorry)
 
 noncomputable def v_r (f : V → ℝ) : V := V_tuple f (r G f)
 
 noncomputable def shift (f : V → ℝ) : V → ℝ := fun v => f v - f (v_r G f)
 
-noncomputable def shift_pos_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := ((shift G f)⁺ ∘ V_tuple f)
-
-noncomputable def shift_neg_i (f : V → ℝ) : Fin (FinEnum.card V) → ℝ := ((shift G f)⁻ ∘ V_tuple f)
+noncomputable def shift_i (f : V → ℝ) : ℕ → ℝ := fun i => if i < FinEnum.card V then shift G f (V_tuple f i) else 0
 
 theorem posPart_sub_sq_add_negPart_sub_sq (u v : V) (f : V → ℝ) :
     (f⁺ u - f⁺ v) ^ 2 + (f⁻ u - f⁻ v) ^ 2 ≤ (f u - f v) ^ 2 := by
@@ -415,15 +413,26 @@ theorem part1 (hg : R G g = gap' G) :
 
 lemma degree_eq (i : Fin (FinEnum.card V)) : (G.degree (V_tuple g i) : ℝ) = (volume G (sweep g i) : ℝ) - (volume G (sweep g (⟨i-1, sorry⟩)) : ℝ) := by
   unfold volume
-  rw [Nat.cast_sum, Nat.cast_sum, ← Finset.sum_sdiff_eq_sub (by unfold sweep; simp only [Set.mem_setOf_eq, Set.toFinset_image]; apply image_subset_image; sorry)]
+  rw [Nat.cast_sum, Nat.cast_sum, ← Finset.sum_sdiff_eq_sub (sorry)]
   have hs : sweep g i \ sweep g ⟨i-1, sorry⟩ = {V_tuple g i} := by
     sorry
   rw [hs, Finset.sum_singleton]
 
 
 
-lemma thm_one_dot_six (f : V → ℝ) : ∑ i, shift_pos_i G f i = ∑ (i : Finset.range (FinEnum.card V)), shift_pos_i G f i := by
-  sorry
+lemma thm_one_dot_six (f : V → ℝ) :
+    ∑ i ∈ range (FinEnum.card V), (shift_i G f)⁺ i • (G.degree (V_tuple g i) : ℝ) =
+    ∑ i ∈ range (FinEnum.card V - 1), ((shift_i G f)⁺ i - (shift_i G f)⁺ (i + 1)) • ((volume G (sweep g ↑i)) : ℝ) := by
+  rw [Finset.sum_range_by_parts]
+  have h : (shift_i G f)⁺ (FinEnum.card V - 1) = 0 := sorry
+  rw [h, smul_eq_mul, zero_mul, zero_sub]
+  have h (i : ℕ) : ∑ j ∈ range (i + 1), (SimpleGraph.degree G (V_tuple g ↑j) : ℝ) = volume G (sweep g i) := by
+    sorry
+  conv_lhs => arg 1; arg 2; intro i; arg 2; rw [h i]
+  rw [← Finset.sum_neg_distrib]
+  conv_lhs => arg 2; intro i; rw [← neg_smul, neg_sub]
+
+
 
 theorem part2_pos : (minSweepConductance G g : ℝ)^2 / 2 ≤ R G ((shift G g)⁺) := by
   set α := minSweepConductance G g
