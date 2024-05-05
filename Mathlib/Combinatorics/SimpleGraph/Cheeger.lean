@@ -69,7 +69,13 @@ end preliminaries
 noncomputable def gLow (s : Finset V) : V → ℝ :=
   (volume G univ : V → ℝ) * (Set.indicator s 1) - (volume G s : V → ℝ)
 
-theorem sum_gLow_mul_degree (s : Finset V) : ∑ v : V, gLow G s v * G.degree v = 0 := sorry
+theorem sum_gLow_mul_degree (s : Finset V) : ∑ v : V, gLow G s v * G.degree v = 0 := by
+  simp only [gLow, Pi.natCast_def, Pi.sub_apply, Pi.mul_apply, sub_mul, sum_sub_distrib]
+  simp_rw [mul_assoc ((volume G univ) : ℝ) (s.toSet.indicator 1 ?x) ((G.degree ?x) : ℝ), ← mul_sum]
+  apply sub_eq_zero.2
+  simp only [Set.indicator_apply, mem_coe, Pi.one_apply, ite_mul, one_mul, zero_mul, sum_ite_mem,
+    univ_inter, ← Nat.cast_sum]
+  rw [← volume, ← volume, mul_comm]
 
 theorem one (s : Finset V) :
     ∑ (u : V) (v : V) with G.Adj u v, (gLow G s u - gLow G s v) ^ 2 = 2 * (volume G univ : ℝ) ^ 2 * cut G s := by
