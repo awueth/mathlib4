@@ -94,8 +94,8 @@ theorem two (s : Finset V) :
     ∑ v, (gLow G s v) ^ (2 : ℕ) * G.degree v = (volume G univ) * (volume G s) * (volume G sᶜ) := by
   simp only [gLow, Pi.natCast_def, Pi.sub_apply, Pi.mul_apply, Set.indicator_apply, mem_coe,
     Pi.one_apply, mul_ite, mul_one, mul_zero]
+  simp [sub_sq', sub_mul, add_mul, sum_sub_distrib, sum_add_distrib]
   sorry
-
 
 theorem three (s : Finset V) : R G (gLow G s) ≤  2 * (conductance G s : ℝ) := by
   rw [R, one G s, two G s]
