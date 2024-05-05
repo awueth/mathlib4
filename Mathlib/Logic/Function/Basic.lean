@@ -46,10 +46,6 @@ theorem const_inj [Nonempty α] {y₁ y₂ : β} : const α y₁ = const α y₂
   ⟨fun h ↦ const_injective h, fun h ↦ h ▸ rfl⟩
 #align function.const_inj Function.const_inj
 
-theorem id_def : @id α = fun x ↦ x :=
-  rfl
-#align function.id_def Function.id_def
-
 -- Porting note: `Function.onFun` is now reducible
 -- @[simp]
 theorem onFun_apply (f : β → β → γ) (g : α → β) (a b : α) : onFun f g a b = f (g a) (g b) :=
